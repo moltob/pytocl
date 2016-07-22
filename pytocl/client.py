@@ -1,6 +1,6 @@
-import argparse
 import enum
 import logging
+import socket
 
 from .driver import Driver
 
@@ -11,19 +11,29 @@ class Client:
     """Client for TORCS racing car simulation with SCRC network server.
 
     Attributes:
-        hostname (str): Server hostname.
+        hostaddr (tuple): Tuple of hostname and port.
         port (int): Port number to connect, from 3001 to 3010 for ten clients.
         bot_id (str): Name of driving bot.
         driver (Driver): Driving logic implementation.
+        serializer (Serializer): Implementation of network data encoding.
         state (State): Runtime state of the client.
+        socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname='localhost', port=3001, *, bot_id='SCR', driver=None):
-        self.hostname = hostname
-        self.port = port
+    def __init__(self, hostname='localhost', port=3001, bot_id='SCR', *,
+                 driver=None, serializer=None, create_connection=None):
+        self.hostaddr = (hostname, port)
         self.bot_id = bot_id
         self.driver = driver or Driver()
+        self.serializer = serializer or Serializer()
         self.state = State.STOPPED
+        self.socket = None
+
+        _logger.debug('Initializing {}.'.format(self))
+
+    def __repr__(self):
+        return '{s.__class__.__name__}({s.hostaddr!r}, {s.bot_id!r}) -- ' \
+               '{s.state.name}'.format(s=self)
 
     def start(self):
         """Enters cyclic execution of the client network interface."""
@@ -34,14 +44,19 @@ class Client:
             self.state = State.STARTING
 
             try:
-                _logger.info('Connecting to {s.hostname}:{s.port}.'.format(s=self))
+                _logger.info('Registering driver {} with server {}.'.format(self.bot_id,
+                                                                            self.hostaddr))
 
-                # todo: connect to server
+                # configure UDP socket:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.socket.settimeout(1.0)
+
+                self.register_driver()
                 self.state = State.RUNNING
 
                 _logger.debug('Connection successful.')
 
-            except Exception as ex:  # todo: reduce catch clause scope
+            except socket.error as ex:
                 _logger.error('Cannot connect to server: {}'.format(ex))
                 self.state = State.STOPPED
 
@@ -50,6 +65,21 @@ class Client:
         if self.state is State.RUNNING:
             _logger.info('Disconnecting from racing server.')
             self.state == State.STOPPING
+
+    def register_driver(self):
+        """Sends driver's initialization data to server and waits for acceptance response."""
+
+        angles = self.driver.range_finder_angles
+        assert len(angles) == 19, \
+            'Inconsistent length {} of range of finder iterable.'.format(len(angles))
+
+        data = {'init': angles}
+        buffer = self.serializer.encode(data, prefix=self.bot_id)
+
+        _logger.info('Registering client.')
+
+        _logger.debug('Sending init data {!r}.'.format(buffer))
+        self.socket.sendto(buffer, self.hostaddr)
 
 
 class State(enum.Enum):
@@ -63,3 +93,33 @@ class State(enum.Enum):
     RUNNING = 3,
     # exiting cyclic execution loop
     STOPPING = 4,
+
+
+class Serializer:
+    """Serializer for racing data protocol."""
+
+    @staticmethod
+    def encode(data, *, prefix=None):
+        """Encodes data in given dictionary.
+
+        Args:
+            data (dict): Dictionary of payload to encode. Values are arrays of numbers.
+            prefix (str|None): Optional prefix string.
+
+        Returns:
+            Bytes to be sent over the wire.
+        """
+
+        elements = []
+
+        if prefix:
+            elements.append(prefix)
+
+        for k, v in data.items():
+            if v and v[0]:
+                # string version of number array:
+                vstr = map(lambda i: str(i), v)
+
+                elements.append('({} {})'.format(k, ' '.join(vstr)))
+
+        return ''.join(elements).encode()

@@ -1,19 +1,14 @@
 from unittest import mock
 
-from pytocl.client import Client
+from pytocl.client import Serializer
+from pytocl.driver import Driver
 
 
-def test_driver_assignment():
-    client = Client()
-    assert not client.driver
+def test_init_encoding():
+    d = Driver()
+    s = Serializer()
 
-    driver = mock.MagicMock()
-    client.driver = driver
+    data = {'init': d.range_finder_angles}
+    encoded = s.encode(data, prefix='SCR')
 
-    assert client.driver is driver
-    assert driver.on_connect.called
-
-    client.driver = None
-
-    assert driver.on_disconnect.called
-    assert not client.driver
+    assert encoded == b'SCR(init -90 -75 -60 -45 -30 -20 -15 -10 -5 0 5 10 15 20 30 45 60 75 90)'
