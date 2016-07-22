@@ -20,10 +20,10 @@ class Client:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname='localhost', port=3001, bot_id='SCR', *,
+    def __init__(self, hostname='localhost', port=3001, bot_id=None, *,
                  driver=None, serializer=None, create_connection=None):
         self.hostaddr = (hostname, port)
-        self.bot_id = bot_id
+        self.bot_id = bot_id or 'Dummy'
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
@@ -52,9 +52,8 @@ class Client:
                 self.socket.settimeout(1.0)
 
                 self.register_driver()
-                self.state = State.RUNNING
 
-                _logger.debug('Connection successful.')
+                _logger.info('Connection successful.')
 
             except socket.error as ex:
                 _logger.error('Cannot connect to server: {}'.format(ex))
@@ -74,12 +73,23 @@ class Client:
             'Inconsistent length {} of range of finder iterable.'.format(len(angles))
 
         data = {'init': angles}
-        buffer = self.serializer.encode(data, prefix=self.bot_id)
+        buffer = self.serializer.encode(data, prefix='SCR-{}'.format(self.bot_id))
 
         _logger.info('Registering client.')
 
-        _logger.debug('Sending init data {!r}.'.format(buffer))
-        self.socket.sendto(buffer, self.hostaddr)
+        while self.state is not State.RUNNING:
+            try:
+                _logger.debug('Sending init data {!r}.'.format(buffer))
+                self.socket.sendto(buffer, self.hostaddr)
+
+                buffer, _ = self.socket.recvfrom(1000)
+                _logger.debug('Received buffer {!r}.'.format(buffer))
+                if b'***identified***' in buffer:
+                    _logger.debug('Server accepted connection.')
+                    self.state = State.RUNNING
+
+            except socket.error as ex:
+                _logger.debug('No connection to server yet ({}).'.format(ex))
 
 
 class State(enum.Enum):
@@ -123,3 +133,9 @@ class Serializer:
                 elements.append('({} {})'.format(k, ' '.join(vstr)))
 
         return ''.join(elements).encode()
+
+    @staticmethod
+    def decode(buffer):
+        """Decodes network representation of sensor data received from racing server."""
+        s = buffer.decode()
+        idx_start = s.find('(')
