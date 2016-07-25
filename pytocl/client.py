@@ -46,18 +46,20 @@ class Client:
             try:
                 _logger.info('Registering driver {} with server {}.'.format(self.bot_id,
                                                                             self.hostaddr))
-
-                # configure UDP socket:
-                self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                self.socket.settimeout(1.0)
-
-                self.register_driver()
-
+                self._configure_udp_socket()
+                self._register_driver()
+                self.state = State.RUNNING
                 _logger.info('Connection successful.')
 
             except socket.error as ex:
                 _logger.error('Cannot connect to server: {}'.format(ex))
                 self.state = State.STOPPED
+
+        while self.state is State.RUNNING:
+            pass
+
+        _logger.info('Client stopped.')
+        self.state = State.STOPPED
 
     def stop(self):
         """Exits cyclic client execution (asynchronously)."""
@@ -65,7 +67,11 @@ class Client:
             _logger.info('Disconnecting from racing server.')
             self.state == State.STOPPING
 
-    def register_driver(self):
+    def _configure_udp_socket(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.settimeout(1.0)
+
+    def _register_driver(self):
         """Sends driver's initialization data to server and waits for acceptance response."""
 
         angles = self.driver.range_finder_angles
@@ -77,7 +83,8 @@ class Client:
 
         _logger.info('Registering client.')
 
-        while self.state is State.STARTING:
+        connected = False
+        while not connected and self.state is not State.STOPPING:
             try:
                 _logger.debug('Sending init buffer {!r}.'.format(buffer))
                 self.socket.sendto(buffer, self.hostaddr)
@@ -86,7 +93,7 @@ class Client:
                 _logger.debug('Received buffer {!r}.'.format(buffer))
                 if b'***identified***' in buffer:
                     _logger.debug('Server accepted connection.')
-                    self.state = State.RUNNING
+                    connected = True
 
             except socket.error as ex:
                 _logger.debug('No connection to server yet ({}).'.format(ex))
