@@ -77,9 +77,9 @@ class Client:
 
         _logger.info('Registering client.')
 
-        while self.state is not State.RUNNING:
+        while self.state is State.STARTING:
             try:
-                _logger.debug('Sending init data {!r}.'.format(buffer))
+                _logger.debug('Sending init buffer {!r}.'.format(buffer))
                 self.socket.sendto(buffer, self.hostaddr)
 
                 buffer, _ = self.socket.recvfrom(1000)
