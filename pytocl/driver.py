@@ -15,3 +15,17 @@ class Driver:
         returned in ``state.State.tracks``.
         """
         return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+
+    def on_restart(self):
+        """Server requested driver restart.
+
+        Optionally implement this event handler to reinitialize internal data structures of the
+        driving logic.
+        """
+
+    def on_shutdown(self):
+        """Server requested driver shutdown.
+
+        Optionally implement this event handler to clean up or write data before the application is
+        stopped.
+        """

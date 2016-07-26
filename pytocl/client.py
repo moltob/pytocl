@@ -6,6 +6,15 @@ from .driver import Driver
 
 _logger = logging.getLogger(__name__)
 
+# special messages from server:
+MSG_IDENTIFIED = b'***identified***'
+MSG_SHUTDOWN = b'***shutdown***'
+MSG_RESTART = b'***restart***'
+
+# timeout for socket connection in seconds and msec:
+TO_SOCKET_SEC = 1
+TO_SOCKET_MSEC = TO_SOCKET_SEC * 1000
+
 
 class Client:
     """Client for TORCS racing car simulation with SCRC network server.
@@ -35,7 +44,7 @@ class Client:
         return '{s.__class__.__name__}({s.hostaddr!r}, {s.bot_id!r}) -- ' \
                '{s.state.name}'.format(s=self)
 
-    def start(self):
+    def run(self):
         """Enters cyclic execution of the client network interface."""
 
         if self.state is State.STOPPED:
@@ -56,7 +65,7 @@ class Client:
                 self.state = State.STOPPED
 
         while self.state is State.RUNNING:
-            pass
+            self._process_server_msg()
 
         _logger.info('Client stopped.')
         self.state = State.STOPPED
@@ -69,7 +78,7 @@ class Client:
 
     def _configure_udp_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.settimeout(1.0)
+        self.socket.settimeout(TO_SOCKET_SEC)
 
     def _register_driver(self):
         """Sends driver's initialization data to server and waits for acceptance response."""
@@ -89,14 +98,38 @@ class Client:
                 _logger.debug('Sending init buffer {!r}.'.format(buffer))
                 self.socket.sendto(buffer, self.hostaddr)
 
-                buffer, _ = self.socket.recvfrom(1000)
+                buffer, _ = self.socket.recvfrom(TO_SOCKET_MSEC)
                 _logger.debug('Received buffer {!r}.'.format(buffer))
-                if b'***identified***' in buffer:
+                if MSG_IDENTIFIED in buffer:
                     _logger.debug('Server accepted connection.')
                     connected = True
 
             except socket.error as ex:
                 _logger.debug('No connection to server yet ({}).'.format(ex))
+
+    def _process_server_msg(self):
+        try:
+            buffer, _ = self.socket.recvfrom(TO_SOCKET_MSEC)
+            _logger.debug('Received buffer {!r}.'.format(buffer))
+
+            if not buffer:
+                return
+
+            elif MSG_SHUTDOWN in buffer:
+                _logger.info('Server requested shutdown.')
+                self.state = State.STOPPING
+                self.driver.on_shutdown()
+
+            elif MSG_RESTART in buffer:
+                _logger.info('Server requested restart of driver.')
+                self.driver.on_restart()
+
+            else:
+                # todo process normal state message and send to driver
+                pass
+
+        except socket.error as ex:
+            _logger.warning('Communication with server failed: {}.'.format(ex))
 
 
 class State(enum.Enum):

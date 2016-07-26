@@ -28,7 +28,7 @@ def main():
 
     # start client loop:
     client = Client(**args.__dict__)
-    client.start()
+    client.run()
 
 
 if __name__ == '__main__':
