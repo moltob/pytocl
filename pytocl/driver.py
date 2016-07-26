@@ -1,3 +1,8 @@
+from typing import Optional
+
+import math
+
+
 class Driver:
     """Driving logic.
 
@@ -29,3 +34,27 @@ class Driver:
         Optionally implement this event handler to clean up or write data before the application is
         stopped.
         """
+
+
+DEGREE_PER_RAD = 180 / math.pi
+
+
+class CarState:
+    """State of car and environment, sent periodically by racing server.
+
+    Update the state's dictionary and use properties to access the various sensor values. Value
+    ``None`` means the sensor value is invalid or unset.
+    """
+
+    def __init__(self):
+        #: Dictionary of sensor values in string representation.
+        self.sensor_dict = {}
+
+    @property
+    def angle(self) -> Optional[float]:
+        """Angle between car direction and track axis, [-180; 180] degrees."""
+        return self._float_value('angle', DEGREE_PER_RAD)
+
+    def _float_value(self, key, factor=1):
+        value_str = self.sensor_dict.get(key)
+        return float(value_str) * factor if value_str else None

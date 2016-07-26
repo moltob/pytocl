@@ -1,7 +1,7 @@
 from unittest import mock
 
 from pytocl.client import Serializer, Client, State
-from pytocl.driver import Driver
+from pytocl.driver import Driver, CarState
 
 
 def test_init_encoding():
@@ -42,6 +42,11 @@ def test_decode_server_message():
     assert len(d) == 19
     assert d['angle'] == '0.008838'
     assert d['wheelSpinVel'] == ['67.9393', '68.8267', '71.4009', '71.7363']
+
+    c = CarState()
+    c.sensor_dict = d
+
+    assert abs(c.angle - 0.5) < 0.01
 
 
 @mock.patch('pytocl.client.socket.socket')
