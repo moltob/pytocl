@@ -125,8 +125,8 @@ class Client:
                 self.driver.on_restart()
 
             else:
-                # todo process normal state message and send to driver
-                pass
+                sdata = self.serializer.decode(buffer)
+                # todo convert into car state
 
         except socket.error as ex:
             _logger.warning('Communication with server failed: {}.'.format(ex))
@@ -146,7 +146,7 @@ class State(enum.Enum):
 
 
 class Serializer:
-    """Serializer for racing data protocol."""
+    """Serializer for racing data dirctionary."""
 
     @staticmethod
     def encode(data, *, prefix=None):
@@ -177,5 +177,26 @@ class Serializer:
     @staticmethod
     def decode(buffer):
         """Decodes network representation of sensor data received from racing server."""
+        d = {}
+
         s = buffer.decode()
-        idx_start = s.find('(')
+        if not (s.startswith('(') and s.endswith(')')):
+            _logger.warning('Buffer not well formed, skipping.')
+
+        else:
+            s = s[1:-1]
+            pairs = s.split(')(')
+
+            for pair in pairs:
+                items = pair.split(' ')
+                if len(items) < 2:
+                    _logger.warning('Buffer {!r} not holding proper key value pair.'.format(buffer))
+                else:
+                    key = items[0]
+                    if len(items) == 2:
+                        value = items[1]
+                    else:
+                        value = items[1:]
+                    d[key] = value
+
+        return d
