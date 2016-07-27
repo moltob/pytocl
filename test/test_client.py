@@ -63,6 +63,7 @@ def test_decode_server_message():
     assert c.distances_track_egde == (4.3701, 4.52608, 5.02757, 6.07753, 8.25773, 11.1429, 13.451,
                                       16.712, 21.5022, 30.2855, 51.8667, 185.376, 69.9077, 26.6353,
                                       12.6621, 8.2019, 6.5479, 5.82979, 5.63029)
+    assert c.distance_track_center == 0.126012
 
 
 @mock.patch('pytocl.client.socket.socket')

@@ -65,6 +65,8 @@ class CarState:
         speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf; inf[, m/s.
         distances_track_egde: Distances to track edge along configured driver range finders,
             [0; 200], m.
+        distance_track_center: Normalized distance from track center, -1: right edge, 0: center,
+            1: left edge, [0; 1].
     """
 
     def __init__(self):
@@ -82,11 +84,12 @@ class CarState:
         self.rpm = 0.0
         self.speed = (0.0, 0.0, 0.0)
         self.distances_track_egde = tuple(200.0 for _ in range(19))
+        self.distance_track_center = 0.0
 
     def update(self, sensor_dict):
         """Updates state data from key value strings in sensor dictionary."""
         self.sensor_dict = sensor_dict
-        self.angle = self.float_value('angle', factor=DEGREE_PER_RADIANS)
+        self.angle = self.float_value('angle') * DEGREE_PER_RADIANS
         self.current_lap_time = self.float_value('curLapTime')
         self.damage = self.int_value('damage')
         self.distance_from_start = self.float_value('distFromStart')
@@ -97,14 +100,15 @@ class CarState:
         self.opponents = self.floats_value('opponents')
         self.race_position = self.int_value('racePos')
         self.rpm = self.float_value('rpm')
-        self.speed = (self.float_value('speedX', factor=MPS_PER_KMH),
-                      self.float_value('speedY', factor=MPS_PER_KMH),
-                      self.float_value('speedZ', factor=MPS_PER_KMH))
+        self.speed = (self.float_value('speedX') * MPS_PER_KMH,
+                      self.float_value('speedY') * MPS_PER_KMH,
+                      self.float_value('speedZ') * MPS_PER_KMH)
         self.distances_track_egde = self.floats_value('track')
+        self.distance_track_center = self.float_value('trackPos')
 
-    def converted_value(self, key, converter, factor=1):
+    def converted_value(self, key, converter):
         try:
-            return converter(self.sensor_dict[key]) * factor
+            return converter(self.sensor_dict[key])
         except (ValueError, KeyError):
             _logger.warning('Expected sensor value {!r} not found.'.format(key))
             return None
