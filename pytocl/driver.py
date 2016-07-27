@@ -65,6 +65,9 @@ class CarState:
         speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf; inf[, m/s.
         distances_from_edge: Distances to track edge along configured driver range finders,
             [0; 200], m.
+        focused_distances_from_egde: Distances to track edge, five values in five degree range along
+            driver focus, [0; 200], m. Can be used only once per second and while on track,
+            otherwise values invalid (-1).
         distance_from_center: Normalized distance from track center, -1: right edge, 0: center,
             1: left edge, [0; 1].
         wheel_velocities: Four wheels' velocity, [0; inf[, deg/s.
@@ -86,6 +89,7 @@ class CarState:
         self.rpm = 0.0
         self.speed = (0.0, 0.0, 0.0)
         self.distances_from_edge = tuple(200.0 for _ in range(19))
+        self.focused_distances_from_egde = tuple(200.0 for _ in range(5))
         self.distance_from_center = 0.0
         self.wheel_velocities = (0.0, 0.0, 0.0, 0.0)
         self.z = 0.0
@@ -108,6 +112,7 @@ class CarState:
                       self.float_value('speedY') * MPS_PER_KMH,
                       self.float_value('speedZ') * MPS_PER_KMH)
         self.distances_from_edge = self.floats_value('track')
+        self.focused_distances_from_egde = self.floats_value('focus')
         self.distance_from_center = self.float_value('trackPos')
         self.wheel_velocities = tuple(v * DEGREE_PER_RADIANS for v in
                                       self.floats_value('wheelSpinVel'))

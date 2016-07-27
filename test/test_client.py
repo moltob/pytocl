@@ -67,6 +67,7 @@ def test_decode_server_message():
     assert c.wheel_velocities == (3892.635153073154, 3943.4794278130635, 4090.970223435639,
                                   4110.1872278843275)
     assert c.z == 0.336726
+    assert c.focused_distances_from_egde == (26.0077, 27.9798, 30.2855, 33.0162, 36.3006)
 
 
 @mock.patch('pytocl.client.socket.socket')
