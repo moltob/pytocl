@@ -48,8 +48,13 @@ class CarState:
     Attributes:
         sensor_dict: Dictionary of sensro key value pairs in string form.
         angle: Angle between car direction and track axis, [-pi; pi], rad.
-        current_lap_time: Time spent in current lap, [0; inf[, sec.
+        current_lap_time: Time spent in current lap, [0; inf[, s.
         damage: Damage points, 0 means no damage, [0; inf[, points.
+        distance_from_start: Distance of car from start line along track center, [0;inf[, m.
+        distance_raced: Distance car traveled since beginning of race, [0;inf[, m.
+        fuel: Current fuel level, [0;inf[, l.
+        gear: Current gear. -1: reverse, 0: neutral, [1;6]: corresponding forward gear.
+        last_lap_time: Time it took to complete last lap, [0; inf[, s.
     """
 
     def __init__(self):
@@ -57,6 +62,11 @@ class CarState:
         self.angle = 0.0
         self.current_lap_time = 0.0
         self.damage = 0
+        self.distance_from_start = 0.0
+        self.distance_raced = 0.0
+        self.fuel = 0.0
+        self.gear = 0
+        self.last_lap_time = 0.0
 
     def update(self, sensor_dict):
         """Updates state data from key value strings in sensor dictionary."""
@@ -64,6 +74,12 @@ class CarState:
         self.angle = self.float_value('angle')
         self.current_lap_time = self.float_value('curLapTime')
         self.damage = self.int_value('damage')
+        self.distance_from_start = self.float_value('distFromStart')
+        self.distance_raced = self.float_value('distRaced')
+        self.fuel = self.float_value('fuel')
+        self.gear = self.int_value('gear')
+        self.last_lap_time = self.float_value('lastLapTime')
+
 
     def converted_value(self, key, converter):
         try:

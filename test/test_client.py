@@ -49,6 +49,11 @@ def test_decode_server_message():
     assert c.angle == 0.008838
     assert c.current_lap_time == 4.052
     assert c.damage == 0
+    assert c.distance_from_start == 1015.56
+    assert c.distance_raced == 42.6238
+    assert c.fuel == 93.9356
+    assert c.gear == 3
+    assert c.last_lap_time == 0.0
 
 
 @mock.patch('pytocl.client.socket.socket')
