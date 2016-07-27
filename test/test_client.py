@@ -44,9 +44,11 @@ def test_decode_server_message():
     assert d['wheelSpinVel'] == ['67.9393', '68.8267', '71.4009', '71.7363']
 
     c = CarState()
-    c.sensor_dict = d
+    c.update(d)
 
-    assert abs(c.angle - 0.5) < 0.01
+    assert c.angle == 0.008838
+    assert c.current_lap_time == 4.052
+    assert c.damage == 0
 
 
 @mock.patch('pytocl.client.socket.socket')

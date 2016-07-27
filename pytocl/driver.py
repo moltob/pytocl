@@ -1,6 +1,8 @@
+import logging
+import math
 from typing import Optional
 
-import math
+_logger = logging.getLogger(__name__)
 
 
 class Driver:
@@ -36,25 +38,41 @@ class Driver:
         """
 
 
-DEGREE_PER_RAD = 180 / math.pi
-
-
 class CarState:
     """State of car and environment, sent periodically by racing server.
 
     Update the state's dictionary and use properties to access the various sensor values. Value
     ``None`` means the sensor value is invalid or unset.
+
+    Attributes:
+        sensor_dict: Dictionary of sensro key value pairs in string form.
+        angle: Angle between car direction and track axis, [-pi; pi], rad.
+        current_lap_time: Time spent in current lap, [0; inf[, sec.
+        damage: Damage points, 0 means no damage, [0; inf[, points.
     """
 
     def __init__(self):
-        #: Dictionary of sensor values in string representation.
-        self.sensor_dict = {}
+        self.sensor_dict = None
+        self.angle = 0.0
+        self.current_lap_time = 0.0
+        self.damage = 0
 
-    @property
-    def angle(self) -> Optional[float]:
-        """Angle between car direction and track axis, [-180; 180] degrees."""
-        return self._float_value('angle', DEGREE_PER_RAD)
+    def update(self, sensor_dict):
+        """Updates state data from key value strings in sensor dictionary."""
+        self.sensor_dict = sensor_dict
+        self.angle = self.float_value('angle')
+        self.current_lap_time = self.float_value('curLapTime')
+        self.damage = self.int_value('damage')
 
-    def _float_value(self, key, factor=1):
-        value_str = self.sensor_dict.get(key)
-        return float(value_str) * factor if value_str else None
+    def float_value(self, key):
+        return self.converted_value(key, float)
+
+    def int_value(self, key):
+        return self.converted_value(key, int)
+
+    def converted_value(self, key, converter):
+        try:
+            return converter(self.sensor_dict[key])
+        except (ValueError, KeyError):
+            _logger.warning('Expected sensor value {!r} not found.'.format(key))
+            return None
