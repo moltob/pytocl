@@ -1,5 +1,6 @@
 import logging
 import math
+from functools import partialmethod
 from typing import Optional
 
 _logger = logging.getLogger(__name__)
@@ -64,15 +65,12 @@ class CarState:
         self.current_lap_time = self.float_value('curLapTime')
         self.damage = self.int_value('damage')
 
-    def float_value(self, key):
-        return self.converted_value(key, float)
-
-    def int_value(self, key):
-        return self.converted_value(key, int)
-
     def converted_value(self, key, converter):
         try:
             return converter(self.sensor_dict[key])
         except (ValueError, KeyError):
             _logger.warning('Expected sensor value {!r} not found.'.format(key))
             return None
+
+    float_value = partialmethod(converted_value, converter=float)
+    int_value = partialmethod(converted_value, converter=int)
