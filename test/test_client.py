@@ -23,7 +23,7 @@ def test_decode_server_message():
              b'(fuel 93.9356)' \
              b'(gear 3)' \
              b'(lastLapTime 0)' \
-             b'(opponents 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200' \
+             b'(opponents 123.4 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200' \
              b' 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200)' \
              b'(racePos 1)' \
              b'(rpm 4509.31)' \
@@ -46,7 +46,7 @@ def test_decode_server_message():
     c = CarState()
     c.update(d)
 
-    assert c.angle == 0.008838
+    assert c.angle == 0.5063800993366215
     assert c.current_lap_time == 4.052
     assert c.damage == 0
     assert c.distance_from_start == 1015.56
@@ -54,6 +54,15 @@ def test_decode_server_message():
     assert c.fuel == 93.9356
     assert c.gear == 3
     assert c.last_lap_time == 0.0
+    assert c.opponents == (123.4, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,
+                           200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,
+                           200, 200, 200, 200, 200, 200, 200, 200)
+    assert c.race_position == 1
+    assert c.rpm == 4509.31
+    assert c.speed == (22.64263888888889, 0.11325277777777779, -0.6783888888888889)
+    assert c.distances_track_egde == (4.3701, 4.52608, 5.02757, 6.07753, 8.25773, 11.1429, 13.451,
+                                      16.712, 21.5022, 30.2855, 51.8667, 185.376, 69.9077, 26.6353,
+                                      12.6621, 8.2019, 6.5479, 5.82979, 5.63029)
 
 
 @mock.patch('pytocl.client.socket.socket')

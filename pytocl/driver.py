@@ -39,6 +39,10 @@ class Driver:
         """
 
 
+DEGREE_PER_RADIANS = 180 / math.pi
+MPS_PER_KMH = 1000 / 3600
+
+
 class CarState:
     """State of car and environment, sent periodically by racing server.
 
@@ -47,14 +51,20 @@ class CarState:
 
     Attributes:
         sensor_dict: Dictionary of sensro key value pairs in string form.
-        angle: Angle between car direction and track axis, [-pi; pi], rad.
+        angle: Angle between car direction and track axis, [-180; 180], deg.
         current_lap_time: Time spent in current lap, [0; inf[, s.
         damage: Damage points, 0 means no damage, [0; inf[, points.
-        distance_from_start: Distance of car from start line along track center, [0;inf[, m.
-        distance_raced: Distance car traveled since beginning of race, [0;inf[, m.
+        distance_from_start: Distance of car from start line along track center, [0; inf[, m.
+        distance_raced: Distance car traveled since beginning of race, [0; inf[, m.
         fuel: Current fuel level, [0;inf[, l.
-        gear: Current gear. -1: reverse, 0: neutral, [1;6]: corresponding forward gear.
+        gear: Current gear. -1: reverse, 0: neutral, [1; 6]: corresponding forward gear.
         last_lap_time: Time it took to complete last lap, [0; inf[, s.
+        opponents: Distances to nearest opponents in 10 deg slices in [-180; 180] deg. [0; 200], m.
+        race_position: Position in race with respect to other cars, [1; N].
+        rpm: Engine's revolutions per minute, [0; inf[.
+        speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf; inf[, m/s.
+        distances_track_egde: Distances to track edge along configured driver range finders,
+            [0; 200], m.
     """
 
     def __init__(self):
@@ -67,11 +77,16 @@ class CarState:
         self.fuel = 0.0
         self.gear = 0
         self.last_lap_time = 0.0
+        self.opponents = tuple(200 for _ in range(36))
+        self.race_position = 1
+        self.rpm = 0.0
+        self.speed = (0.0, 0.0, 0.0)
+        self.distances_track_egde = tuple(200.0 for _ in range(19))
 
     def update(self, sensor_dict):
         """Updates state data from key value strings in sensor dictionary."""
         self.sensor_dict = sensor_dict
-        self.angle = self.float_value('angle')
+        self.angle = self.float_value('angle', factor=DEGREE_PER_RADIANS)
         self.current_lap_time = self.float_value('curLapTime')
         self.damage = self.int_value('damage')
         self.distance_from_start = self.float_value('distFromStart')
@@ -79,14 +94,21 @@ class CarState:
         self.fuel = self.float_value('fuel')
         self.gear = self.int_value('gear')
         self.last_lap_time = self.float_value('lastLapTime')
+        self.opponents = self.floats_value('opponents')
+        self.race_position = self.int_value('racePos')
+        self.rpm = self.float_value('rpm')
+        self.speed = (self.float_value('speedX', factor=MPS_PER_KMH),
+                      self.float_value('speedY', factor=MPS_PER_KMH),
+                      self.float_value('speedZ', factor=MPS_PER_KMH))
+        self.distances_track_egde = self.floats_value('track')
 
-
-    def converted_value(self, key, converter):
+    def converted_value(self, key, converter, factor=1):
         try:
-            return converter(self.sensor_dict[key])
+            return converter(self.sensor_dict[key]) * factor
         except (ValueError, KeyError):
             _logger.warning('Expected sensor value {!r} not found.'.format(key))
             return None
 
     float_value = partialmethod(converted_value, converter=float)
+    floats_value = partialmethod(converted_value, converter=lambda l: tuple(float(v) for v in l))
     int_value = partialmethod(converted_value, converter=int)
