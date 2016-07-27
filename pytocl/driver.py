@@ -67,6 +67,8 @@ class CarState:
             [0; 200], m.
         distance_track_center: Normalized distance from track center, -1: right edge, 0: center,
             1: left edge, [0; 1].
+        wheel_velocities: Four wheels' velocity, [0; inf[, deg/s.
+        z: Distance of car center of mass to track surface, ]-inf; inf[, m.
     """
 
     def __init__(self):
@@ -85,6 +87,8 @@ class CarState:
         self.speed = (0.0, 0.0, 0.0)
         self.distances_track_egde = tuple(200.0 for _ in range(19))
         self.distance_track_center = 0.0
+        self.wheel_velocities = (0.0, 0.0, 0.0, 0.0)
+        self.z = 0.0
 
     def update(self, sensor_dict):
         """Updates state data from key value strings in sensor dictionary."""
@@ -105,6 +109,10 @@ class CarState:
                       self.float_value('speedZ') * MPS_PER_KMH)
         self.distances_track_egde = self.floats_value('track')
         self.distance_track_center = self.float_value('trackPos')
+        self.wheel_velocities = tuple(v * DEGREE_PER_RADIANS for v in
+                                      self.floats_value('wheelSpinVel'))
+        self.z = self.float_value('z')
+
 
     def converted_value(self, key, converter):
         try:

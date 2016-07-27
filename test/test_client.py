@@ -64,6 +64,9 @@ def test_decode_server_message():
                                       16.712, 21.5022, 30.2855, 51.8667, 185.376, 69.9077, 26.6353,
                                       12.6621, 8.2019, 6.5479, 5.82979, 5.63029)
     assert c.distance_track_center == 0.126012
+    assert c.wheel_velocities == (3892.635153073154, 3943.4794278130635, 4090.970223435639,
+                                  4110.1872278843275)
+    assert c.z == 0.336726
 
 
 @mock.patch('pytocl.client.socket.socket')
