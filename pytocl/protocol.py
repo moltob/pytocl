@@ -2,7 +2,8 @@ import enum
 import logging
 import socket
 
-from .driver import Driver
+from pytocl.car import State as CarState
+from pytocl.driver import Driver
 
 _logger = logging.getLogger(__name__)
 
@@ -27,16 +28,18 @@ class Client:
         serializer (Serializer): Implementation of network data encoding.
         state (State): Runtime state of the client.
         socket (socket): UDP socket to server.
+        carstate (State): Last car state received from server.
     """
 
     def __init__(self, hostname='localhost', port=3001, bot_id=None, *,
-                 driver=None, serializer=None):
+                 driver=None, carstate=None, serializer=None):
         self.hostaddr = (hostname, port)
         self.bot_id = bot_id or 'Dummy'
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
         self.socket = None
+        self.carstate = carstate or CarState()
 
         _logger.debug('Initializing {}.'.format(self))
 
@@ -125,8 +128,10 @@ class Client:
                 self.driver.on_restart()
 
             else:
-                sdata = self.serializer.decode(buffer)
-                # todo convert into car state
+                sensor_dict = self.serializer.decode(buffer)
+                self.carstate.update(sensor_dict)
+                command = self.driver.drive(self.carstate)
+                # todo encode command and send to server
 
         except socket.error as ex:
             _logger.warning('Communication with server failed: {}.'.format(ex))

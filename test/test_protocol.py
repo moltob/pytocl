@@ -1,7 +1,8 @@
 from unittest import mock
 
-from pytocl.client import Serializer, Client, State
-from pytocl.driver import Driver, CarState
+from pytocl.protocol import Serializer, Client, State
+from pytocl.driver import Driver
+from pytocl.car import State as CarState
 
 
 def test_init_encoding():
@@ -70,7 +71,7 @@ def test_decode_server_message():
     assert c.focused_distances_from_egde == (26.0077, 27.9798, 30.2855, 33.0162, 36.3006)
 
 
-@mock.patch('pytocl.client.socket.socket')
+@mock.patch('pytocl.protocol.socket.socket')
 def test_special_messages(mock_socket_ctor):
     mock_socket = mock.MagicMock()
     mock_socket_ctor.return_value = mock_socket
