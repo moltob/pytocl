@@ -30,7 +30,7 @@ class Client:
     """
 
     def __init__(self, hostname='localhost', port=3001, bot_id=None, *,
-                 driver=None, serializer=None, create_connection=None):
+                 driver=None, serializer=None):
         self.hostaddr = (hostname, port)
         self.bot_id = bot_id or 'Dummy'
         self.driver = driver or Driver()
