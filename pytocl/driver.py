@@ -63,9 +63,9 @@ class CarState:
         race_position: Position in race with respect to other cars, [1; N].
         rpm: Engine's revolutions per minute, [0; inf[.
         speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf; inf[, m/s.
-        distances_track_egde: Distances to track edge along configured driver range finders,
+        distances_from_edge: Distances to track edge along configured driver range finders,
             [0; 200], m.
-        distance_track_center: Normalized distance from track center, -1: right edge, 0: center,
+        distance_from_center: Normalized distance from track center, -1: right edge, 0: center,
             1: left edge, [0; 1].
         wheel_velocities: Four wheels' velocity, [0; inf[, deg/s.
         z: Distance of car center of mass to track surface, ]-inf; inf[, m.
@@ -85,8 +85,8 @@ class CarState:
         self.race_position = 1
         self.rpm = 0.0
         self.speed = (0.0, 0.0, 0.0)
-        self.distances_track_egde = tuple(200.0 for _ in range(19))
-        self.distance_track_center = 0.0
+        self.distances_from_edge = tuple(200.0 for _ in range(19))
+        self.distance_from_center = 0.0
         self.wheel_velocities = (0.0, 0.0, 0.0, 0.0)
         self.z = 0.0
 
@@ -107,8 +107,8 @@ class CarState:
         self.speed = (self.float_value('speedX') * MPS_PER_KMH,
                       self.float_value('speedY') * MPS_PER_KMH,
                       self.float_value('speedZ') * MPS_PER_KMH)
-        self.distances_track_egde = self.floats_value('track')
-        self.distance_track_center = self.float_value('trackPos')
+        self.distances_from_edge = self.floats_value('track')
+        self.distance_from_center = self.float_value('trackPos')
         self.wheel_velocities = tuple(v * DEGREE_PER_RADIANS for v in
                                       self.floats_value('wheelSpinVel'))
         self.z = self.float_value('z')
