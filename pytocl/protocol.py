@@ -130,6 +130,7 @@ class Client:
             else:
                 sensor_dict = self.serializer.decode(buffer)
                 self.carstate.update(sensor_dict)
+                _logger.debug(self.carstate)
                 command = self.driver.drive(self.carstate)
                 # todo encode command and send to server
 

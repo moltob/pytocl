@@ -60,6 +60,10 @@ class State:
         self.wheel_velocities = (0.0, 0.0, 0.0, 0.0)
         self.z = 0.0
 
+    def __str__(self):
+        kvs = ('{}: {}'.format(k, v) for k, v in self.__dict__.items() if k != 'sensor_dict')
+        return '\n'.join(kvs)
+
     def update(self, sensor_dict):
         """Updates state data from key value strings in sensor dictionary."""
         self.sensor_dict = sensor_dict
