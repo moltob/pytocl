@@ -2,7 +2,7 @@
 import argparse
 import logging
 
-from pytocl.client import Client
+from pytocl.protocol import Client
 
 
 def main():

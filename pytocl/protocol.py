@@ -183,25 +183,32 @@ class Serializer:
     def decode(buffer):
         """Decodes network representation of sensor data received from racing server."""
         d = {}
-
         s = buffer.decode()
-        if not (s.startswith('(') and s.endswith(')')):
-            _logger.warning('Buffer not well formed, skipping.')
 
-        else:
-            s = s[1:-1]
-            pairs = s.split(')(')
+        pos = 0
+        while len(s) > pos:
+            start = s.find('(', pos)
+            if start < 0:
+                # end of list:
+                break
 
-            for pair in pairs:
-                items = pair.split(' ')
-                if len(items) < 2:
-                    _logger.warning('Buffer {!r} not holding proper key value pair.'.format(buffer))
+            end = s.find(')', start + 1)
+            if end < 0:
+                _logger.warning('Opening brace at position {} not matched in '
+                                'buffer {!r}.'.format(start, buffer))
+                break
+
+            items = s[start + 1:end].split(' ')
+            if len(items) < 2:
+                _logger.warning('Buffer {!r} not holding proper key value pair.'.format(buffer))
+            else:
+                key = items[0]
+                if len(items) == 2:
+                    value = items[1]
                 else:
-                    key = items[0]
-                    if len(items) == 2:
-                        value = items[1]
-                    else:
-                        value = items[1:]
-                    d[key] = value
+                    value = items[1:]
+                d[key] = value
+
+            pos = end + 1
 
         return d
