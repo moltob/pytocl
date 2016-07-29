@@ -67,7 +67,12 @@ def test_decode_server_message():
     assert c.wheel_velocities == (3892.635153073154, 3943.4794278130635, 4090.970223435639,
                                   4110.1872278843275)
     assert c.z == 0.336726
-    assert c.focused_distances_from_egde == (26.0077, 27.9798, 30.2855, 33.0162, 36.3006)
+    assert c.focused_distances_from_edge == (26.0077, 27.9798, 30.2855, 33.0162, 36.3006)
+    assert c.focused_distances_from_egde_valid
+
+    # fake bad focus value:
+    c.focused_distances_from_edge = (-1.0, -1.0, -1.0, -1.0, -1.0)
+    assert not c.focused_distances_from_egde_valid
 
 
 @mock.patch('pytocl.protocol.socket.socket')
@@ -108,5 +113,5 @@ def test_buffer_regression_1():
 def test_encode_command():
     c = Command()
     buffer = Serializer().encode(c.actuator_dict)
-    assert b'(accel 0.0)' in  buffer
+    assert b'(accel 0.0)' in buffer
     assert b'(clutch 0)' in buffer

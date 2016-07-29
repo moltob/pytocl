@@ -9,7 +9,14 @@ DEGREE_PER_RADIANS = 180 / math.pi
 MPS_PER_KMH = 1000 / 3600
 
 
-class State:
+class Value:
+    """Base class for value objects."""
+
+    def __str__(self):
+        return '\n'.join('{}: {}'.format(k, v) for k, v in self.__dict__.items())
+
+
+class State(Value):
     """State of car and environment, sent periodically by racing server.
 
     Update the state's dictionary and use properties to access the various sensor values. Value
@@ -31,9 +38,9 @@ class State:
         speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf;inf[, m/s.
         distances_from_edge: Distances to track edge along configured driver range finders,
             [0;200], m.
-        focused_distances_from_egde: Distances to track edge, five values in five degree range along
+        focused_distances_from_edge: Distances to track edge, five values in five degree range along
             driver focus, [0;200], m. Can be used only once per second and while on track,
-            otherwise values invalid (-1).
+            otherwise values set to -1. See ``focused_distances_from_egde_valid``.
         distance_from_center: Normalized distance from track center, -1: right edge, 0: center,
             1: left edge, [0;1].
         wheel_velocities: Four wheels' velocity, [0;inf[, deg/s.
@@ -57,14 +64,22 @@ class State:
                       self.float_value(sensor_dict, 'speedY') * MPS_PER_KMH,
                       self.float_value(sensor_dict, 'speedZ') * MPS_PER_KMH)
         self.distances_from_edge = self.floats_value(sensor_dict, 'track')
-        self.focused_distances_from_egde = self.floats_value(sensor_dict, 'focus')
         self.distance_from_center = self.float_value(sensor_dict, 'trackPos')
         self.wheel_velocities = tuple(v * DEGREE_PER_RADIANS for v in
                                       self.floats_value(sensor_dict, 'wheelSpinVel'))
         self.z = self.float_value(sensor_dict, 'z')
 
-    def __str__(self):
-        return '\n'.join('{}: {}'.format(k, v) for k, v in self.__dict__.items())
+        self.focused_distances_from_edge = self.floats_value(sensor_dict, 'focus')
+
+    @property
+    def distances_from_egde_valid(self):
+        """Flag whether regular distances are currently valid."""
+        return -1 not in self.distances_from_edge
+
+    @property
+    def focused_distances_from_egde_valid(self):
+        """Flag whether focus distances are currently valid."""
+        return -1 not in self.focused_distances_from_edge
 
     @staticmethod
     def converted_value(sensor_dict, key, converter):
@@ -79,7 +94,7 @@ class State:
     int_value = partialmethod(converted_value, converter=int)
 
 
-class Command:
+class Command(Value):
     """Command to drive car during next control cycle.
 
     Attributes:
@@ -89,7 +104,7 @@ class Command:
         steering: Rotation of steering wheel, -1: full right, 0: straight, 1: full left, [-1;1].
             Full turn results in an approximate wheel rotation of 21 degrees.
         focus: Direction of driver's focus, resulting in corresponding
-            ``State.focused_distances_from_egde``, [-90;90], deg.
+            ``State.focused_distances_from_edge``, [-90;90], deg.
     """
 
     def __init__(self):
