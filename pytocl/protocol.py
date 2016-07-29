@@ -28,18 +28,16 @@ class Client:
         serializer (Serializer): Implementation of network data encoding.
         state (State): Runtime state of the client.
         socket (socket): UDP socket to server.
-        carstate (State): Last car state received from server.
     """
 
     def __init__(self, hostname='localhost', port=3001, bot_id=None, *,
-                 driver=None, carstate=None, serializer=None):
+                 driver=None, serializer=None):
         self.hostaddr = (hostname, port)
         self.bot_id = bot_id or 'Dummy'
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
         self.socket = None
-        self.carstate = carstate or CarState()
 
         _logger.debug('Initializing {}.'.format(self))
 
@@ -129,10 +127,15 @@ class Client:
 
             else:
                 sensor_dict = self.serializer.decode(buffer)
-                self.carstate.update(sensor_dict)
-                _logger.debug(self.carstate)
-                command = self.driver.drive(self.carstate)
-                # todo encode command and send to server
+                carstate = CarState(sensor_dict)
+                _logger.debug(carstate)
+
+                command = self.driver.drive(carstate)
+
+                _logger.debug(command)
+                buffer = self.serializer.encode(command.actuator_dict)
+                _logger.debug('Sending buffer {!r}.'.format(buffer))
+                self.socket.sendto(buffer, self.hostaddr)
 
         except socket.error as ex:
             _logger.warning('Communication with server failed: {}.'.format(ex))
@@ -172,7 +175,7 @@ class Serializer:
             elements.append(prefix)
 
         for k, v in data.items():
-            if v and v[0]:
+            if v and v[0] is not None:
                 # string version of number array:
                 vstr = map(lambda i: str(i), v)
 

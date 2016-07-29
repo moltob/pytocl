@@ -6,7 +6,6 @@ from pytocl.car import State, Command
 _logger = logging.getLogger(__name__)
 
 
-
 class Driver:
     """Driving logic.
 

@@ -2,7 +2,7 @@ from unittest import mock
 
 from pytocl.protocol import Serializer, Client, State
 from pytocl.driver import Driver
-from pytocl.car import State as CarState
+from pytocl.car import State as CarState, Command
 
 
 def test_init_encoding():
@@ -44,8 +44,7 @@ def test_decode_server_message():
     assert d['angle'] == '0.008838'
     assert d['wheelSpinVel'] == ['67.9393', '68.8267', '71.4009', '71.7363']
 
-    c = CarState()
-    c.update(d)
+    c = CarState(d)
 
     assert c.angle == 0.5063800993366215
     assert c.current_lap_time == 4.052
@@ -104,3 +103,10 @@ def test_buffer_regression_1():
     s = Serializer()
     d = s.decode(buffer)
     assert d['z'] == '0.355918'
+
+
+def test_encode_command():
+    c = Command()
+    buffer = Serializer().encode(c.actuator_dict)
+    assert b'(accel 0.0)' in  buffer
+    assert b'(clutch 0)' in buffer
