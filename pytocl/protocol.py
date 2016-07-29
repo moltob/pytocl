@@ -75,7 +75,8 @@ class Client:
         """Exits cyclic client execution (asynchronously)."""
         if self.state is State.RUNNING:
             _logger.info('Disconnecting from racing server.')
-            self.state == State.STOPPING
+            self.state = State.STOPPING
+            self.driver.on_shutdown()
 
     def _configure_udp_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -118,8 +119,7 @@ class Client:
 
             elif MSG_SHUTDOWN in buffer:
                 _logger.info('Server requested shutdown.')
-                self.state = State.STOPPING
-                self.driver.on_shutdown()
+                self.stop()
 
             elif MSG_RESTART in buffer:
                 _logger.info('Server requested restart of driver.')
@@ -139,6 +139,10 @@ class Client:
 
         except socket.error as ex:
             _logger.warning('Communication with server failed: {}.'.format(ex))
+
+        except KeyboardInterrupt:
+            _logger.info('User requested shutdown.')
+            self.stop()
 
 
 class State(enum.Enum):
