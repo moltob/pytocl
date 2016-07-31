@@ -1,5 +1,4 @@
 import logging
-import math
 
 from pytocl.car import State, Command
 
@@ -39,5 +38,28 @@ class Driver:
         """
 
     def drive(self, carstate: State) -> Command:
-        """Produces driving command in response to newly received car state."""
-        return Command()
+        """Produces driving command in response to newly received car state.
+
+        This is a dummy driving routine, very dumb and not really considering a lot of inputs. But
+        it will get the car (if not disturbed by other drivers) successfully driven along the race
+        track.
+        """
+        command = Command()
+
+        # align the car direction with the direction of the track:
+        command.steering = 0.3 * carstate.angle - (0.7 * carstate.distance_from_center)
+
+        target_speed = 20
+
+        # reach target velocity:
+        if carstate.rpm > 8000:
+            command.gear = carstate.gear + 1
+        elif carstate.rpm < 2500 and carstate.gear > 1:
+            command.gear = carstate.gear - 1
+        else:
+            command.gear = carstate.gear or 1
+
+        if carstate.speed[0] < target_speed:
+            command.accelerator = 1
+
+        return command
