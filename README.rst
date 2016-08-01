@@ -9,7 +9,6 @@ Redesign goals:
 * Python 3
 * Prevent hacks
 * Pythonic (no getter/setters, naming, ...)
-* Use asyncio for messaging
 * Clean input/output and process modeling
 * Add a few test cases to show how to test and to make sure refactoring works
 * Use logging for command line output
