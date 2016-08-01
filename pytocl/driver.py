@@ -1,6 +1,7 @@
 import logging
 
 from pytocl.car import State, Command
+from pytocl.controller import ProportionalController
 
 _logger = logging.getLogger(__name__)
 
@@ -12,6 +13,9 @@ class Driver:
     creating car control commands as a response. The ``drive`` function is called periodically
     every 20ms and must return a command within 10ms wall time.
     """
+
+    def __init__(self):
+        self.controller = ProportionalController(-0.2)
 
     @property
     def range_finder_angles(self):
@@ -29,6 +33,7 @@ class Driver:
         Optionally implement this event handler to reinitialize internal data structures of the
         driving logic.
         """
+        self.controller.reset()
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -47,9 +52,11 @@ class Driver:
         command = Command()
 
         # align the car direction with the direction of the track:
-        command.steering = 0.3 * carstate.angle - (0.7 * carstate.distance_from_center)
+        #command.steering = 0.3 * carstate.angle - (0.7 * carstate.distance_from_center)
+        command.steering = self.controller.control(carstate.distance_from_center)
+        _logger.info('Steering angle: {}'.format(command.steering))
 
-        target_speed = 20
+        target_speed = 10
 
         # reach target velocity:
         if carstate.rpm > 8000:
