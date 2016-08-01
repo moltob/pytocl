@@ -59,7 +59,7 @@ class Driver:
         else:
             command.gear = carstate.gear or 1
 
-        if carstate.speed[0] < target_speed:
+        if carstate.speed_x < target_speed:
             command.accelerator = 1
 
         return command

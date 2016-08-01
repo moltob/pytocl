@@ -35,7 +35,9 @@ class State(Value):
         opponents: Distances to nearest opponents in 10 deg slices in [-180;180] deg. [0;200], m.
         race_position: Position in race with respect to other cars, [1;N].
         rpm: Engine's revolutions per minute, [0;inf[.
-        speed: Speed in X (forward), Y (left), Z (up) direction, ]-inf;inf[, m/s.
+        speed_x: Speed in X (forward) direction, ]-inf;inf[, m/s.
+        speed_y: Speed in Y (left) direction, ]-inf;inf[, m/s.
+        speed_z: Speed in Z (up) direction, ]-inf;inf[, m/s.
         distances_from_edge: Distances to track edge along configured driver range finders,
             [0;200], m.
         focused_distances_from_edge: Distances to track edge, five values in five degree range along
@@ -60,9 +62,9 @@ class State(Value):
         self.opponents = self.floats_value(sensor_dict, 'opponents')
         self.race_position = self.int_value(sensor_dict, 'racePos')
         self.rpm = self.float_value(sensor_dict, 'rpm')
-        self.speed = (self.float_value(sensor_dict, 'speedX') * MPS_PER_KMH,
-                      self.float_value(sensor_dict, 'speedY') * MPS_PER_KMH,
-                      self.float_value(sensor_dict, 'speedZ') * MPS_PER_KMH)
+        self.speed_x = self.float_value(sensor_dict, 'speedX') * MPS_PER_KMH
+        self.speed_y = self.float_value(sensor_dict, 'speedY') * MPS_PER_KMH
+        self.speed_z = self.float_value(sensor_dict, 'speedZ') * MPS_PER_KMH
         self.distances_from_edge = self.floats_value(sensor_dict, 'track')
         self.distance_from_center = self.float_value(sensor_dict, 'trackPos')
         self.wheel_velocities = tuple(v * DEGREE_PER_RADIANS for v in
