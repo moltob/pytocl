@@ -1,7 +1,7 @@
 import logging
 
 from pytocl.car import State, Command
-from pytocl.controller import ProportionalController
+from pytocl.controller import ProportionalController, DerivativeController, pd_controller
 
 _logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class Driver:
     """
 
     def __init__(self):
-        self.controller = ProportionalController(-0.2)
+        self.controller = pd_controller(-0.4, -4)
 
     @property
     def range_finder_angles(self):
@@ -51,9 +51,11 @@ class Driver:
         """
         command = Command()
 
+        _logger.info('Controlling car at laptime {} s.'.format(carstate.current_lap_time))
+
         # align the car direction with the direction of the track:
         #command.steering = 0.3 * carstate.angle - (0.7 * carstate.distance_from_center)
-        command.steering = self.controller.control(carstate.distance_from_center)
+        command.steering = self.controller.control(carstate.distance_from_center, carstate.current_lap_time)
         _logger.info('Steering angle: {}'.format(command.steering))
 
         target_speed = 10
