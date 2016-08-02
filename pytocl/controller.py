@@ -80,7 +80,7 @@ class IntegrationController(Controller):
         integral_limit: Optional integration limit of absolute value.
     """
 
-    def __init__(self, gain, integral_limit=None):
+    def __init__(self, gain, *, integral_limit=None):
         self.gain = gain
         self.integral_limit = integral_limit
         self.integral = 0
