@@ -24,8 +24,9 @@ class Driver:
             DerivativeController(2)
         )
         self.acceleration_ctrl = CompositeController(
-            ProportionalController(0.5),
-            #DerivativeController(3)
+            ProportionalController(0.03),
+            IntegrationController(0.01, integral_limit=1),
+            DerivativeController(0.01)
         )
 
     @property
@@ -67,15 +68,16 @@ class Driver:
         command = Command()
         command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
         acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
-        #print('Acceleration: {:-8.3f}'.format(acceleration))
+        print('Acceleration: {:-8.3f}'.format(acceleration))
+        print('Acceleration controller:', self.acceleration_ctrl)
 
-        print('Current lap time:', carstate.current_lap_time)
-        print('Last lap time:   ', carstate.last_lap_time)
+        #print('Current lap time:', carstate.current_lap_time)
+        #print('Last lap time:   ', carstate.last_lap_time)
 
         if acceleration > 0:
             command.accelerator = max(acceleration, 1)
-        else:
-            command.brake = max(abs(acceleration), 1)
+        #elif acceleration < -0.5:
+        #    command.brake = max(-acceleration, 1)
 
         if carstate.rpm > 8000:
             command.gear = carstate.gear + 1
