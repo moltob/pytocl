@@ -5,27 +5,27 @@ import math
 
 
 class Controller(abc.ABC):
-    """Base class for a numeric steering_pid."""
+    """Base class for a numeric controller."""
 
     last_value = 0.0
 
     @abc.abstractproperty
     def shortname(self):
-        """Short name of steering_pid type to show in logs."""
+        """Short name of controller type to show in logs."""
 
     @abc.abstractmethod
     def control(self, deviation, timestamp) -> float:
         """Compute control variable from deviation of outputs."""
 
     def reset(self):
-        """Resets any history that my be stored in steering_pid state."""
+        """Resets any history that my be stored in controller state."""
 
     def __str__(self):
         return '{}: {:-8.3f}'.format(self.shortname, self.last_value)
 
 
 class ProportionalController(Controller):
-    """P steering_pid.
+    """P controller.
 
     Attributes:
         gain: Factor applied to deviation.
@@ -45,7 +45,7 @@ class ProportionalController(Controller):
 
 
 class DerivativeController(Controller):
-    """D steering_pid.
+    """D controller.
 
     Attributes:
         gain: Factor applied to derivative of error.
@@ -73,7 +73,7 @@ class DerivativeController(Controller):
 
 
 class IntegrationController(Controller):
-    """I steering_pid.
+    """I controller.
 
     Attributes:
         gain: Factor applied to derivative of error.

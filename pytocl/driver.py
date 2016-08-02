@@ -1,6 +1,8 @@
 import logging
 
-from pytocl.car import State, Command
+import math
+
+from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.controller import CompositeController, ProportionalController, IntegrationController, \
     DerivativeController
 
@@ -16,11 +18,12 @@ class Driver:
     """
 
     def __init__(self):
-        self.steering_pid = CompositeController(
-            ProportionalController(-1),
-            IntegrationController(-0.2, 1.5),
-            DerivativeController(-4)
+        self.steering_ctrl = CompositeController(
+            ProportionalController(1),
+            IntegrationController(0.2, 1.5),
+            DerivativeController(4)
         )
+        self.acceleration_ctrl = ProportionalController(0.5)
 
     @property
     def range_finder_angles(self):
@@ -38,7 +41,7 @@ class Driver:
         Optionally implement this event handler to reinitialize internal data structures of the
         driving logic.
         """
-        self.steering_pid.reset()
+        self.steering_ctrl.reset()
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -54,22 +57,25 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        steering_error = 0.0 - carstate.distance_from_center
+        speed_error = 75 * MPS_PER_KMH - carstate.speed_x
+        #print('Steering error: {:-8.3f}, Speed error: {:-8.3f}'.format(steering_error, speed_error))
+
         command = Command()
-        command.steering = self.steering_pid.control(carstate.distance_from_center + 0.55,
-                                                     carstate.current_lap_time)
-        print('Steering angle: {}'.format(self.steering_pid))
+        command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
+        acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
+        print('Acceleration: {:-8.3f}'.format(acceleration))
 
-        target_speed = 10
+        if acceleration > 0:
+            command.accelerator = max(acceleration, 1)
+        else:
+            command.brake = max(abs(acceleration), 1)
 
-        # reach target velocity:
         if carstate.rpm > 8000:
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2500 and carstate.gear > 1:
             command.gear = carstate.gear - 1
         else:
             command.gear = carstate.gear or 1
-
-        if carstate.speed_x < target_speed:
-            command.accelerator = 1
 
         return command
