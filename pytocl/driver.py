@@ -19,11 +19,14 @@ class Driver:
 
     def __init__(self):
         self.steering_ctrl = CompositeController(
-            ProportionalController(1),
+            ProportionalController(0.4),
             IntegrationController(0.2, integral_limit=1.5),
-            DerivativeController(4)
+            DerivativeController(2)
         )
-        self.acceleration_ctrl = ProportionalController(0.5)
+        self.acceleration_ctrl = CompositeController(
+            ProportionalController(0.5),
+            #DerivativeController(3)
+        )
 
     @property
     def range_finder_angles(self):
@@ -64,7 +67,10 @@ class Driver:
         command = Command()
         command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
         acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
-        print('Acceleration: {:-8.3f}'.format(acceleration))
+        #print('Acceleration: {:-8.3f}'.format(acceleration))
+
+        print('Current lap time:', carstate.current_lap_time)
+        print('Last lap time:   ', carstate.last_lap_time)
 
         if acceleration > 0:
             command.accelerator = max(acceleration, 1)
