@@ -1,7 +1,8 @@
 import logging
 
 from pytocl.car import State, Command
-from pytocl.controller import ProportionalController, DerivativeController, pd_controller
+from pytocl.controller import CompositeController, ProportionalController, IntegrationController, \
+    DerivativeController
 
 _logger = logging.getLogger(__name__)
 
@@ -15,7 +16,11 @@ class Driver:
     """
 
     def __init__(self):
-        self.controller = pd_controller(-0.4, -4)
+        self.steering_pid = CompositeController(
+            ProportionalController(-0.5),
+            IntegrationController(-0.2, 1),
+            DerivativeController(-4)
+        )
 
     @property
     def range_finder_angles(self):
@@ -33,7 +38,7 @@ class Driver:
         Optionally implement this event handler to reinitialize internal data structures of the
         driving logic.
         """
-        self.controller.reset()
+        self.steering_pid.reset()
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -50,13 +55,9 @@ class Driver:
         track.
         """
         command = Command()
-
-        _logger.info('Controlling car at laptime {} s.'.format(carstate.current_lap_time))
-
-        # align the car direction with the direction of the track:
-        #command.steering = 0.3 * carstate.angle - (0.7 * carstate.distance_from_center)
-        command.steering = self.controller.control(carstate.distance_from_center, carstate.current_lap_time)
-        _logger.info('Steering angle: {}'.format(command.steering))
+        command.steering = self.steering_pid.control(carstate.distance_from_center + 0.55,
+                                                     carstate.current_lap_time)
+        print('Steering angle: {}'.format(self.steering_pid))
 
         target_speed = 10
 
