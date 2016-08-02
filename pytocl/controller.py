@@ -77,12 +77,12 @@ class IntegrationController(Controller):
 
     Attributes:
         gain: Factor applied to derivative of error.
-        limit: Optional integration limit of absolute value.
+        integral_limit: Optional integration limit of absolute value.
     """
 
-    def __init__(self, gain, limit=None):
+    def __init__(self, gain, integral_limit=None):
         self.gain = gain
-        self.limit = limit
+        self.integral_limit = integral_limit
         self.integral = 0
         self.last_timestamp = 0
 
@@ -92,8 +92,8 @@ class IntegrationController(Controller):
 
     def control(self, deviation, timestamp):
         self.integral += deviation * (timestamp - self.last_timestamp)
-        if self.limit and abs(self.integral) > self.limit:
-            self.integral = math.copysign(self.limit, self.integral)
+        if self.integral_limit and abs(self.integral) > self.integral_limit:
+            self.integral = math.copysign(self.integral_limit, self.integral)
         self.last_timestamp = timestamp
         value = self.gain * self.integral
         self.last_value = value
