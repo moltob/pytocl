@@ -17,8 +17,8 @@ class Driver:
 
     def __init__(self):
         self.steering_pid = CompositeController(
-            ProportionalController(-0.5),
-            IntegrationController(-0.2, 1),
+            ProportionalController(-1),
+            IntegrationController(-0.2, 1.5),
             DerivativeController(-4)
         )
 
