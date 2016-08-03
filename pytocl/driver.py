@@ -24,7 +24,7 @@ class Driver:
             DerivativeController(2)
         )
         self.acceleration_ctrl = CompositeController(
-            ProportionalController(5.5)
+            ProportionalController(3.7)
         )
 
     @property
@@ -60,7 +60,9 @@ class Driver:
         track.
         """
         steering_error = 0.0 - carstate.distance_from_center
-        speed_error = 1.001 * 75 * MPS_PER_KMH - carstate.speed_x
+
+        # compensate engine deceleration, but invisible to controller to prevent braking:
+        speed_error = 1.0025 * 75 * MPS_PER_KMH - carstate.speed_x
         #print('Steering error: {:-8.3f}, Speed error: {:-8.3f}'.format(steering_error, speed_error))
 
         command = Command()
