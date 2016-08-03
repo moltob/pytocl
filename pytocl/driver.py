@@ -59,30 +59,34 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-
         command = Command()
-        steering_error = 0.0 - carstate.distance_from_center
-        command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
+        self.steer(carstate, 0.0, command)
+        self.accelerate(carstate, 80, command)
+        return command
 
-
+    def accelerate(self, carstate, target_speed, command):
         # compensate engine deceleration, but invisible to controller to prevent braking:
-        speed_error = 1.0025 * 55 * MPS_PER_KMH - carstate.speed_x
+        speed_error = 1.0025 * target_speed * MPS_PER_KMH - carstate.speed_x
         acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
+
+        # stabilize use of gas and brake:
         acceleration = math.pow(acceleration, 3)
-        print('Speed:',
-              carstate.speed_x / MPS_PER_KMH,
-              carstate.speed_y / MPS_PER_KMH,
-              carstate.speed_z / MPS_PER_KMH)
+
         if acceleration > 0:
             command.accelerator = min(acceleration, 1)
+
+            if carstate.rpm > 8000:
+                command.gear = carstate.gear + 1
+
         else:
             command.brake = min(-acceleration, 1)
 
-        if carstate.rpm > 8000:
-            command.gear = carstate.gear + 1
-        elif carstate.rpm < 2500 and carstate.gear > 1:
-            command.gear = carstate.gear - 1
-        else:
+            if carstate.rpm < 2500:
+                command.gear = carstate.gear - 1
+
+        if not command.gear:
             command.gear = carstate.gear or 1
 
-        return command
+    def steer(self, carstate, target_track_pos, command):
+        steering_error = target_track_pos - carstate.distance_from_center
+        command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
