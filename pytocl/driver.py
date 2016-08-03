@@ -24,7 +24,7 @@ class Driver:
             DerivativeController(2)
         )
         self.acceleration_ctrl = CompositeController(
-            ProportionalController(3.7)
+            ProportionalController(3.7),
         )
 
     @property
@@ -59,30 +59,24 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-        steering_error = 0.0 - carstate.distance_from_center
-
-        # compensate engine deceleration, but invisible to controller to prevent braking:
-        speed_error = 1.0025 * 75 * MPS_PER_KMH - carstate.speed_x
-        #print('Steering error: {:-8.3f}, Speed error: {:-8.3f}'.format(steering_error, speed_error))
 
         command = Command()
+        steering_error = 0.0 - carstate.distance_from_center
         command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
+
+
+        # compensate engine deceleration, but invisible to controller to prevent braking:
+        speed_error = 1.0025 * 55 * MPS_PER_KMH - carstate.speed_x
         acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
-        #print('Acceleration controller:', self.acceleration_ctrl)
-
-        #print('Current lap time:', carstate.current_lap_time)
-        #print('Last lap time:   ', carstate.last_lap_time)
-
-        #acceleration = math.pow(acceleration, 15)
-        #print('Acceleration:', acceleration)
+        acceleration = math.pow(acceleration, 3)
         print('Speed:',
               carstate.speed_x / MPS_PER_KMH,
               carstate.speed_y / MPS_PER_KMH,
               carstate.speed_z / MPS_PER_KMH)
         if acceleration > 0:
             command.accelerator = min(acceleration, 1)
-        #elif acceleration < -0.5:
-        #    command.brake = max(-acceleration, 1)
+        else:
+            command.brake = min(-acceleration, 1)
 
         if carstate.rpm > 8000:
             command.gear = carstate.gear + 1
