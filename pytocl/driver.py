@@ -24,9 +24,7 @@ class Driver:
             DerivativeController(2)
         )
         self.acceleration_ctrl = CompositeController(
-            ProportionalController(0.03),
-            IntegrationController(0.01, integral_limit=1),
-            DerivativeController(0.01)
+            ProportionalController(5.5)
         )
 
     @property
@@ -62,20 +60,25 @@ class Driver:
         track.
         """
         steering_error = 0.0 - carstate.distance_from_center
-        speed_error = 75 * MPS_PER_KMH - carstate.speed_x
+        speed_error = 1.001 * 75 * MPS_PER_KMH - carstate.speed_x
         #print('Steering error: {:-8.3f}, Speed error: {:-8.3f}'.format(steering_error, speed_error))
 
         command = Command()
         command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
         acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
-        print('Acceleration: {:-8.3f}'.format(acceleration))
-        print('Acceleration controller:', self.acceleration_ctrl)
+        #print('Acceleration controller:', self.acceleration_ctrl)
 
         #print('Current lap time:', carstate.current_lap_time)
         #print('Last lap time:   ', carstate.last_lap_time)
 
+        #acceleration = math.pow(acceleration, 15)
+        #print('Acceleration:', acceleration)
+        print('Speed:',
+              carstate.speed_x / MPS_PER_KMH,
+              carstate.speed_y / MPS_PER_KMH,
+              carstate.speed_z / MPS_PER_KMH)
         if acceleration > 0:
-            command.accelerator = max(acceleration, 1)
+            command.accelerator = min(acceleration, 1)
         #elif acceleration < -0.5:
         #    command.brake = max(-acceleration, 1)
 
