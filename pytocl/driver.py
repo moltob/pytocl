@@ -61,7 +61,12 @@ class Driver:
         """
         command = Command()
         self.steer(carstate, 0.0, command)
-        self.accelerate(carstate, 80, command)
+
+        ACC_LATERAL_MAX = 6400 * 5
+        v_x = min(150, math.sqrt(ACC_LATERAL_MAX / abs(command.steering)))
+        print('target speed: ', v_x)
+
+        self.accelerate(carstate, v_x, command)
         return command
 
     def accelerate(self, carstate, target_speed, command):
@@ -73,6 +78,10 @@ class Driver:
         acceleration = math.pow(acceleration, 3)
 
         if acceleration > 0:
+            if abs(carstate.distance_from_center) >= 1:
+                # off track, reduced grip:
+                acceleration = min(0.4, acceleration)
+
             command.accelerator = min(acceleration, 1)
 
             if carstate.rpm > 8000:
@@ -81,8 +90,8 @@ class Driver:
         else:
             command.brake = min(-acceleration, 1)
 
-            if carstate.rpm < 2500:
-                command.gear = carstate.gear - 1
+        if carstate.rpm < 2500:
+            command.gear = carstate.gear - 1
 
         if not command.gear:
             command.gear = carstate.gear or 1
