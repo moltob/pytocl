@@ -6,7 +6,7 @@ from pytocl.car import State as CarState, Command
 
 
 def test_init_encoding():
-    d = Driver()
+    d = Driver(False)
     s = Serializer()
 
     data = {'init': d.range_finder_angles}
@@ -82,7 +82,7 @@ def test_special_messages(mock_socket_ctor):
     mock_socket = mock.MagicMock()
     mock_socket_ctor.return_value = mock_socket
     mock_driver = mock.MagicMock()
-    mock_driver.range_finder_angles = Driver().range_finder_angles
+    mock_driver.range_finder_angles = Driver(False).range_finder_angles
     client = Client(driver=mock_driver)
     assert client.state is State.STOPPED
 
@@ -93,6 +93,7 @@ def test_special_messages(mock_socket_ctor):
     client.run()
     assert client.state is State.STOPPED
 
+    # not supported on server side
     assert mock_driver.on_restart.call_count == 1
     assert mock_driver.on_shutdown.call_count == 1
 

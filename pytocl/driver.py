@@ -1,6 +1,9 @@
+import datetime
 import logging
 
 import math
+import os
+import pickle
 
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.controller import CompositeController, ProportionalController, IntegrationController, \
@@ -17,7 +20,7 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
-    def __init__(self):
+    def __init__(self, logstate=True):
         self.steering_ctrl = CompositeController(
             ProportionalController(0.4),
             IntegrationController(0.2, integral_limit=1.5),
@@ -26,6 +29,22 @@ class Driver:
         self.acceleration_ctrl = CompositeController(
             ProportionalController(3.7),
         )
+
+        if logstate:
+            dirname = 'drivelogs'
+            timestr = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+            fname = 'drivelog-{}.pickle'.format(timestr)
+            fpath = os.path.abspath(os.path.join(dirname, fname))
+            _logger.info('Logging driver behavior to {}.'.format(fpath))
+
+            os.makedirs(dirname, exist_ok=True)
+            self.statelog_file = open(fpath, 'wb')
+            self.pickler = pickle.Pickler(self.statelog_file)
+        else:
+            self.statelog_file = None
+            self.pickler = None
+
+        self.numlogged = 0
 
     @property
     def range_finder_angles(self):
@@ -37,20 +56,18 @@ class Driver:
         """
         return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
 
-    def on_restart(self):
-        """Server requested driver restart.
-
-        Optionally implement this event handler to reinitialize internal data structures of the
-        driving logic.
-        """
-        self.steering_ctrl.reset()
-
     def on_shutdown(self):
         """Server requested driver shutdown.
 
         Optionally implement this event handler to clean up or write data before the application is
         stopped.
         """
+        if self.statelog_file:
+            self.statelog_file.close()
+            _logger.info('Saved {} log entries.'.format(self.numlogged))
+            self.statelog_file = None
+            self.pickler = None
+            self.numlogged = 0
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
@@ -59,6 +76,10 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        if self.pickler:
+            self.pickler.dump(carstate)
+            self.numlogged += 1
+
         command = Command()
         self.steer(carstate, 0.0, command)
 
