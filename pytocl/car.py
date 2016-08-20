@@ -1,7 +1,7 @@
 import logging
-from functools import partialmethod
-
 import math
+from collections import Iterable
+from functools import partialmethod
 
 _logger = logging.getLogger(__name__)
 
@@ -14,6 +14,15 @@ class Value:
 
     def __str__(self):
         return '\n'.join('{}: {}'.format(k, v) for k, v in self.__dict__.items())
+
+    def chain(self, *attributes):
+        """Attribute iterator, unpacking iterable attributes."""
+        for name in attributes:
+            value = getattr(self, name)
+            if isinstance(value, Iterable):
+                yield from value
+            else:
+                yield value
 
 
 class State(Value):

@@ -5,7 +5,7 @@ import math
 import os
 import pickle
 
-from pytocl.analysis import Snapshot, DataLogger
+from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.controller import CompositeController, ProportionalController, IntegrationController, \
     DerivativeController
@@ -30,7 +30,7 @@ class Driver:
         self.acceleration_ctrl = CompositeController(
             ProportionalController(3.7),
         )
-        self.data_logger = DataLogger() if logdata else None
+        self.data_logger = DataLogWriter() if logdata else None
 
     @property
     def range_finder_angles(self):

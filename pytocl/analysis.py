@@ -4,22 +4,14 @@ import logging
 import os
 import pickle
 
+import itertools
+
+import numpy as np
+
 _logger = logging.getLogger(__name__)
 
 
-class Snapshot:
-    """Container for pair consisting of (input) car state and (output) drive command.
-
-    This container provides a single object used for serialization of during the race. It later
-    can be loaded again to analyze how the driver responded to certain input data.
-    """
-
-    def __init__(self, state, command):
-        self.state = state
-        self.command = command
-
-
-class DataLogger:
+class DataLogWriter:
     """Serialization of snapshots."""
 
     def __init__(self):
@@ -41,7 +33,7 @@ class DataLogger:
     def log(self, state, command):
         """Log pair of data."""
         if self.logging:
-            self.pickler.dump(Snapshot(state, command))
+            self.pickler.dump((state, command))
             self.numlogged += 1
         else:
             _logger.warning('Logger closed, cannot log data to file.')
@@ -58,3 +50,55 @@ class DataLogger:
     @property
     def logging(self):
         return self.file is not None
+
+
+class DataLogReader:
+    """Deserialization of logged data as ``np.array``."""
+
+    def __init__(self, filepath, state_attributes=None, command_attributes=None):
+        self.filepath = filepath
+        self.state_attributes = state_attributes or []
+        self.command_attributes = command_attributes or []
+
+        self._current_lap_time = 0
+        self._last_laps_accumulated_time = 0
+        self._numrows = 0
+
+    @property
+    def overall_time(self):
+        return self._current_lap_time + self._last_laps_accumulated_time
+
+    @property
+    def array(self):
+        self._current_lap_time = float('-inf')
+        self._last_laps_accumulated_time = 0
+        self._numrows = 0
+
+        _logger.info('Accessing data log {}.'.format(self.filepath))
+        with open(self.filepath, 'rb') as logfile:
+            unpickler = pickle.Unpickler(logfile)
+            rows = self.rows(unpickler)
+            a = np.fromiter(itertools.chain.from_iterable(rows), float)
+            a.resize((self._numrows, a.size / self._numrows))
+
+            return a
+
+    def rows(self, unpickler):
+        """Iterates over rows in data."""
+        try:
+            while True:
+                state, command = unpickler.load()
+
+                # compute accumulated race time:
+                if self._current_lap_time > state.current_lap_time:
+                    self._last_laps_accumulated_time += state.last_lap_time
+                self._current_lap_time = state.current_lap_time
+
+                row = itertools.chain((self.overall_time,),
+                                      state.chain(*self.state_attributes),
+                                      command.chain(*self.command_attributes))
+                self._numrows += 1
+
+                yield row
+        except EOFError:
+            pass
