@@ -64,7 +64,6 @@ class Driver:
 
         ACC_LATERAL_MAX = 6400 * 5
         v_x = min(150, math.sqrt(ACC_LATERAL_MAX / abs(command.steering)))
-        print('target speed: ', v_x)
 
         self.accelerate(carstate, v_x, command)
 
