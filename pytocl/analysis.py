@@ -79,7 +79,7 @@ class DataLogReader:
             unpickler = pickle.Unpickler(logfile)
             rows = self.rows(unpickler)
             a = np.fromiter(itertools.chain.from_iterable(rows), float)
-            a.resize((self._numrows, a.size / self._numrows))
+            a.resize((self._numrows, int(a.size / self._numrows)))
 
             return a
 
