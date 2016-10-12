@@ -1,14 +1,7 @@
-import datetime
 import logging
 
-import math
-import os
-import pickle
-
 from pytocl.analysis import DataLogWriter
-from pytocl.car import State, Command, MPS_PER_KMH
-from pytocl.controller import CompositeController, ProportionalController, IntegrationController, \
-    DerivativeController
+from pytocl.car import State, Command
 
 _logger = logging.getLogger(__name__)
 
@@ -22,14 +15,6 @@ class Driver:
     """
 
     def __init__(self, logdata=True):
-        self.steering_ctrl = CompositeController(
-            ProportionalController(0.4),
-            IntegrationController(0.2, integral_limit=1.5),
-            DerivativeController(2)
-        )
-        self.acceleration_ctrl = CompositeController(
-            ProportionalController(3.7),
-        )
         self.data_logger = DataLogWriter() if logdata else None
 
     @property
@@ -61,12 +46,7 @@ class Driver:
         """
         command = Command()
         self.steer(carstate, 0.0, command)
-
-        #ACC_LATERAL_MAX = 6400 * 5
-        #v_x = min(80, math.sqrt(ACC_LATERAL_MAX / abs(command.steering)))
-        v_x = 80
-
-        self.accelerate(carstate, v_x, command)
+        self.accelerate(carstate, 40, command)
 
         if self.data_logger:
             self.data_logger.log(carstate, command)
@@ -74,32 +54,7 @@ class Driver:
         return command
 
     def accelerate(self, carstate, target_speed, command):
-        # compensate engine deceleration, but invisible to controller to prevent braking:
-        speed_error = 1.0025 * target_speed * MPS_PER_KMH - carstate.speed_x
-        acceleration = self.acceleration_ctrl.control(speed_error, carstate.current_lap_time)
-
-        # stabilize use of gas and brake:
-        acceleration = math.pow(acceleration, 3)
-
-        if acceleration > 0:
-            if abs(carstate.distance_from_center) >= 1:
-                # off track, reduced grip:
-                acceleration = min(0.4, acceleration)
-
-            command.accelerator = min(acceleration, 1)
-
-            if carstate.rpm > 8000:
-                command.gear = carstate.gear + 1
-
-        #else:
-        #    command.brake = min(-acceleration, 1)
-
-        if carstate.rpm < 2500:
-            command.gear = carstate.gear - 1
-
-        if not command.gear:
-            command.gear = carstate.gear or 1
+        pass
 
     def steer(self, carstate, target_track_pos, command):
-        steering_error = target_track_pos - carstate.distance_from_center
-        command.steering = self.steering_ctrl.control(steering_error, carstate.current_lap_time)
+        pass
