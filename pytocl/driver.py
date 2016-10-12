@@ -62,8 +62,9 @@ class Driver:
         command = Command()
         self.steer(carstate, 0.0, command)
 
-        ACC_LATERAL_MAX = 6400 * 5
-        v_x = min(150, math.sqrt(ACC_LATERAL_MAX / abs(command.steering)))
+        #ACC_LATERAL_MAX = 6400 * 5
+        #v_x = min(80, math.sqrt(ACC_LATERAL_MAX / abs(command.steering)))
+        v_x = 80
 
         self.accelerate(carstate, v_x, command)
 
@@ -90,8 +91,8 @@ class Driver:
             if carstate.rpm > 8000:
                 command.gear = carstate.gear + 1
 
-        else:
-            command.brake = min(-acceleration, 1)
+        #else:
+        #    command.brake = min(-acceleration, 1)
 
         if carstate.rpm < 2500:
             command.gear = carstate.gear - 1
