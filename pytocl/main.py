@@ -7,14 +7,11 @@ from pytocl.protocol import Client
 
 def main():
     """Main entry point of application."""
-
-    # todo: check if bot_id is really needed
     parser = argparse.ArgumentParser(description='Client for TORCS racing car simulation with SCRC '
                                                  'network server.')
     parser.add_argument('--hostname', help='Racing server host name.', default='localhost')
     parser.add_argument('--port', help='Port to connect, 3001 - 3010 for clients 1 - 10.',
                         type=int, default=3001)
-    parser.add_argument('--bot-id', help='Instance ID, shown in server UI.')
     parser.add_argument('-v', help='Debug log level.', action='store_true')
     args = parser.parse_args()
 

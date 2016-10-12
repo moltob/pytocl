@@ -23,17 +23,15 @@ class Client:
     Attributes:
         hostaddr (tuple): Tuple of hostname and port.
         port (int): Port number to connect, from 3001 to 3010 for ten clients.
-        bot_id (str): Name of driving bot.
         driver (Driver): Driving logic implementation.
         serializer (Serializer): Implementation of network data encoding.
         state (State): Runtime state of the client.
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname='localhost', port=3001, bot_id=None, *,
+    def __init__(self, hostname='localhost', port=3001, *,
                  driver=None, serializer=None):
         self.hostaddr = (hostname, port)
-        self.bot_id = bot_id or 'Dummy'
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
@@ -42,8 +40,7 @@ class Client:
         _logger.debug('Initializing {}.'.format(self))
 
     def __repr__(self):
-        return '{s.__class__.__name__}({s.hostaddr!r}, {s.bot_id!r}) -- ' \
-               '{s.state.name}'.format(s=self)
+        return '{s.__class__.__name__}({s.hostaddr!r}) -- {s.state.name}'.format(s=self)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -54,8 +51,7 @@ class Client:
             self.state = State.STARTING
 
             try:
-                _logger.info('Registering driver {} with server {}.'.format(self.bot_id,
-                                                                            self.hostaddr))
+                _logger.info('Registering driver client with server {}.'.format(self.hostaddr))
                 self._configure_udp_socket()
                 self._register_driver()
                 self.state = State.RUNNING
@@ -90,7 +86,7 @@ class Client:
             'Inconsistent length {} of range of finder iterable.'.format(len(angles))
 
         data = {'init': angles}
-        buffer = self.serializer.encode(data, prefix='SCR-{}'.format(self.bot_id))
+        buffer = self.serializer.encode(data, prefix='SCR-{}'.format(self.hostaddr[1]))
 
         _logger.info('Registering client.')
 
