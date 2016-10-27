@@ -19,6 +19,7 @@ class Driver:
         self.accelerator = 0.0
 
     @property
+
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
 
@@ -38,27 +39,7 @@ class Driver:
             self.data_logger.close()
             self.data_logger = None
 
-    def drive(self, carstate: State) -> Command:
-        """Produces driving command in response to newly received car state.
-
-        This is a dummy driving routine, very dumb and not really considering a lot of inputs. But
-        it will get the car (if not disturbed by other drivers) successfully driven along the race
-        track.
-        """
-        command = Command()
-
-        # dummy steering control:
-        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
-
-        # basic acceleration to target speed:
-        if carstate.speed_x < 50 * MPS_PER_KMH:
-            self.accelerator += 0.1
-        else:
-            self.accelerator = 0
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
+    def select_gear(self, carstate: State, command: Command):
 
         # gear shifting:
         _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
@@ -69,6 +50,36 @@ class Driver:
         elif carstate.rpm < 2000 and carstate.gear > 1:
             _logger.info('switching down')
             command.gear = carstate.gear - 1
+
+    def select_steering(self, carstate: State, command: Command):
+        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+
+    def select_acceleration(self, carstate: State, command: Command):
+        if carstate.speed_x < 50 * MPS_PER_KMH:
+            self.accelerator += 0.1
+        else:
+            self.accelerator = 0
+        self.accelerator = min(1, self.accelerator)
+        self.accelerator = max(-1, self.accelerator)
+        command.accelerator = self.accelerator
+        _logger.info('accelerator: {}'.format(command.accelerator))
+
+    def drive(self, carstate: State) -> Command:
+        """Produces driving command in response to newly received car state.
+
+        This is a dummy driving routine, very dumb and not really considering a lot of inputs. But
+        it will get the car (if not disturbed by other drivers) successfully driven along the race
+        track.
+        """
+        command = Command()
+
+        # steering control:
+        self.select_steering(carstate, command)
+
+        # basic acceleration to target speed:
+        self.select_acceleration(carstate, command)
+
+        self.select_gear(carstate, command)
 
         if self.data_logger:
             self.data_logger.log(carstate, command)
