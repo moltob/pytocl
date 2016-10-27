@@ -11,7 +11,7 @@ class SpeedListData:
 
 class SpeedList:
     def __init__(self):
-        self.data = list()
+        self.data = np.array([])
         pass
 
     def add(self, distance, speed):
