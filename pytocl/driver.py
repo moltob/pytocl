@@ -89,6 +89,12 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        return self.controlCar(State, tar_speed, 0.5, 20, 0.5, 20)
+
+    def controlCar(self, carstate: State, tar_speed, K_acc, T_acc, K_brake, T_brake) -> Command:
+        """basic function to control car on street"""
         command = Command()
 
         # dummy steering control:
@@ -98,23 +104,24 @@ class Driver:
         command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
 
         #tar_speed = self.calc_target_speed(carstate)
-        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
 
         #speed_control = self.pid_speed.control(carstate.speed_x, tar_speed * MPS_PER_KMH)
 
         #_logger.info('speed_control: {}'.format(speed_control))
         #speed_control = speed_control / MPS_PER_KMH
         speed_control = (tar_speed * MPS_PER_KMH) - carstate.speed_x
+
         if speed_control > 0:
             self.acc_counter += 1
-            self.accelerator = pt1up(1, 20, self.acc_counter)
+            self.accelerator = pt1up(K_acc, T_acc, self.acc_counter)
             #self.accelerator = min(100,speed_control) / 100
             self.brake = 0
             self.brake_counter = 0
         elif speed_control < 0:
             #self.brake = -(max(-100,speed_control) / 100)
             self.brake_counter += 1
-            self.brake = pt1up(1, 20, self.brake_counter)
+            self.brake = pt1up(K_brake, T_brake, self.brake_counter)
             self.accelerator = 0
             self.acc_counter = 0
         else:
@@ -127,7 +134,6 @@ class Driver:
         self.accelerator = max(-1, self.accelerator)
         self.brake = min(1, self.brake)
         self.brake = max(-1, self.brake)
-
 
         #self.accel_and_brake(carstate.speed_x, tar_speed)
 
@@ -149,34 +155,8 @@ class Driver:
         if self.data_logger:
             self.data_logger.log(carstate, command)
 
-        self.last_steering = command.steering
-
         _logger.info("Distance: " + str(carstate.distance_from_start))
-
-        return command
-
-    def accel_and_brake(self, cur_speed, target_speed):
-        if cur_speed < target_speed * MPS_PER_KMH:
-            self.accelerator += 0.1
-            self.brake = 0
-        elif cur_speed > (target_speed + 10) * MPS_PER_KMH:
-        #elif (cur_speed - (target_speed * MPS_PER_KMH)) > 50:
-            self.brake += 0.1
-            self.accelerator = 0
-        #elif cur_speed > target_speed * MPS_PER_KMH:
-        #    if self.brake <= 0.3:
-        #        self.brake = 0.3
-        #    else:
-        #        self.brake -= 0.1
-        #    self.accelerator = 0
-        else:
-            self.accelerator = 0
-            self.brake = 0
-
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        self.brake = min(1, self.brake)
-        self.brake = max(-1, self.brake)
+        pass
 
     def calc_target_speed(self, carstate: State):
         if carstate.distances_from_edge[9] < 20:
