@@ -45,7 +45,7 @@ class Driver:
     def select_gear(self, carstate: State, command: Command):
 
         # gear shifting:
-        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
+        #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 7000 and carstate.gear < 6:
             _logger.info('switching up')
@@ -74,14 +74,63 @@ class Driver:
         command.steering = (steering_angle)
 
     def select_acceleration(self, carstate: State, command: Command):
-        if carstate.speed_x < 80 * MPS_PER_KMH:
-            self.accelerator += 0.1
+
+        acceleration_const = 0.8
+        _logger.info('distance_from_start: {}'.format(carstate.distance_from_start))
+
+        if carstate.distance_from_start > 0 and carstate.distance_from_start < 350:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 350 and carstate.distance_from_start < 380 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 480 and carstate.distance_from_start < 700:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 700 and carstate.distance_from_start < 750 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 800 and carstate.distance_from_start < 950:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 1100 and carstate.distance_from_start < 1400:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 1580 and carstate.distance_from_start < 1850:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 1850 and carstate.distance_from_start < 1950 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 1950 and carstate.distance_from_start < 2300:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 2300 and carstate.distance_from_start < 2400 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 2550 and carstate.distance_from_start < 2650:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 2650 and carstate.distance_from_start < 2700 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 3050 and carstate.distance_from_start < 3400:
+            command.accelerator = acceleration_const
+            command.brake = 0
         else:
-            self.accelerator = 0
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
+            command.brake = 0
+
+            if carstate.speed_x < 60 * MPS_PER_KMH:
+                self.accelerator += 0.1
+            else:
+                self.accelerator = 0
+            self.accelerator = min(1, self.accelerator)
+            self.accelerator = max(-1, self.accelerator)
+            command.accelerator = self.accelerator
+       # _logger.info('accelerator: {}'.format(command.accelerator))
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
