@@ -23,7 +23,7 @@ class Lane:
     def lookfwd(self, carstate):
         max_dist = 0
         max_idx = -1
-        if carstate.distances_from_edge[0] == -1:
+        if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
             self.vel = 40
             self.ang = 500
             return
