@@ -104,15 +104,15 @@ class Dynamic:
                     self.accelerator += 0.4
                 elif speed - carstate.speed_x > 10:
                     self.accelerator += 0.2
-                else:
-                    if abs(carstate.angle) > 20:
-                        self.brake = 0.4
-                    elif abs(carstate.angle) > 15:
-                        self.brake = 0.3
-                    elif abs(carstate.angle) > 10:
-                        self.brake = 0.1
-                    else:
-                        self.brake = 0
+                #else:
+                #    if abs(carstate.angle) > 20:
+                #        self.brake = 0.4
+                #    elif abs(carstate.angle) > 15:
+                #        self.brake = 0.3
+                #    elif abs(carstate.angle) > 10:
+                #        self.brake = 0.1
+                #    else:
+                #        self.brake = 0
         elif speed < carstate.speed_x:
             self.brake = 0.7
             self.accelerator -= 0.5
