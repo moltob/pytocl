@@ -33,14 +33,14 @@ class Dynamic:
         angle = mylane.angle()
 
         if (speed < carstate.speed_x):
-            self.brake = 0.5
+            self.brake = 0.6
         else : self.brake = 0
 
         if (speed > carstate.speed_x):
             if ((carstate.speed_x < carstate.speed_y) or (carstate.speed_y<5)):
-                self.accelerator += 0.2
+                self.accelerator += 0.8
         else:
-            self.accelerator -= 0.3
+            self.accelerator -= 0.35
 
 
         print ("%f -> x %f  y %f" % (speed, carstate.speed_x, carstate.speed_y))
