@@ -2,6 +2,7 @@ import logging
 
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
+from .jazzDriver.jazzdriver import JazzDriver
 
 _logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class Driver:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
+        self.jazzDriver = JazzDriver()
 
     @property
     def range_finder_angles(self):
@@ -73,4 +75,4 @@ class Driver:
         if self.data_logger:
             self.data_logger.log(carstate, command)
 
-        return command
+        return self.jazzDriver.drive(carstate)
