@@ -17,6 +17,9 @@ class Driver:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
+        self.angle_old = 1
+        self.currentAngleCorr = 0.3
+        self.carstate_old = None
 
     @property
 
@@ -53,19 +56,25 @@ class Driver:
 
     def select_steering(self, carstate: State, command: Command):
         #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
-        #steering_angle = (carstate.angle * 0.3) / 21
-        steering_angle = (carstate.angle * (1-(carstate.speed_x/100))) / 21
-        print ((carstate.speed_y/10))
 
-        if (steering_angle >= 0):
-            steering_angle = max (steering_angle, -10/21)
-        else:
-            steering_angle = min (steering_angle, 10/21)
+        steering_angle = (carstate.angle * self.currentAngleCorr)
+
+#        angle_diff_quat = abs(self.angle_old-carstate.angle) / self.angle_old
+
+
+        if ((abs(self.angle_old-carstate.angle) < 5)):
+            pass
+        elif (self.angle_old < carstate.angle and self.currentAngleCorr < 1):
+            self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
+        elif (self.angle_old > carstate.angle and self.currentAngleCorr > 0.3):
+            self.currentAngleCorr = self.currentAngleCorr - 0.1#*(angle_diff_quat)
+
+        self.angle_old = carstate.angle
 
         command.steering = (steering_angle)
 
     def select_acceleration(self, carstate: State, command: Command):
-        if carstate.speed_x < 50 * MPS_PER_KMH:
+        if carstate.speed_x < 80 * MPS_PER_KMH:
             self.accelerator += 0.1
         else:
             self.accelerator = 0
@@ -93,5 +102,7 @@ class Driver:
 
         if self.data_logger:
             self.data_logger.log(carstate, command)
+
+        self.angle_old = carstate.angle
 
         return command
