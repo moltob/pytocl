@@ -30,10 +30,10 @@ class GearboxController:
     def control(self, rpm, gear):
         # gear shifting:
         self.gear_control = gear or 1
-        if rpm > 7000 and gear < 6:
+        if rpm > 8000 and gear < 6:
             _logger.info('switching up')
             self.gear_control = gear + 1
-        elif rpm < 2000 and gear > 1:
+        elif rpm < 3000 and gear > 1:
             _logger.info('switching down')
             self.gear_control = gear - 1
 
@@ -57,15 +57,20 @@ class SteeringController:
 class VelocityController:
     def __init__(self):
         self.accelerator = 0.0
+        self.brake = 0.0
 
     def control(self, target_speed_x, current_speed_x):
         # basic acceleration to target speed:
-        if current_speed_x < target_speed_x * MPS_PER_KMH:
-            self.accelerator += 0.1
+        speed_diff = target_speed_x * MPS_PER_KMH - current_speed_x
+        if speed_diff > 0:
+            self.accelerator = 1.0
+            self.brake = 0.0
         else:
-            self.accelerator = 0
+            self.accelerator = 0.0
+            self.brake = -speed_diff * 0.1
+
         self.accelerator = min(1, self.accelerator)
         self.accelerator = max(-1, self.accelerator)
         _logger.info('VelocityController: speed_x, accelerator: {}, {}'.
                      format(target_speed_x, self.accelerator))
-        return self.accelerator, 0
+        return self.accelerator, self.brake

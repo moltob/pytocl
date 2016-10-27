@@ -32,7 +32,7 @@ class StrategyController:
 
     def detect_curve(self, carstate: State):
         m = carstate.distances_from_edge
-        if carstate.distances_from_egde_valid and m[9] > 0 and m[9] < 150:
+        if carstate.distances_from_egde_valid and m[9] > 0 and m[9] < 65:
             if m[8] < m[9] < m[10]:
                 return Curve.RIGHT
             elif m[8] > m[9] > m[10]:
