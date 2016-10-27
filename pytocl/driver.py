@@ -77,10 +77,10 @@ class Driver:
         print (self.currentAngleCorr)
         print ("-----")
 
-        self.angle_old = carstate.angle
-
-        if ((abs(self.angle_old-carstate.angle) < 10)):
+        if ((abs(self.angle_old-carstate.angle) < 10) and (abs(self.angle_old-carstate.angle) > 0.03)):
             command.steering = (carstate.angle * self.currentAngleCorr)
+
+        self.angle_old = carstate.angle
 
     def select_acceleration(self, carstate: State, command: Command):
 
