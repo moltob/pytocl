@@ -19,25 +19,43 @@ class StrategyController:
         self.target_pos = 0
 
     def control(self, carstate: State):
-        self.speed = self.control_speed(carstate)
+        self.speed, self.target_pos = self.control_speed(carstate)
 
         return self.speed, self.target_pos
 
     def control_speed(self, carstate: State):
-        cshape = self.detect_curve(carstate)
-        _logger.info('StrategyController: {}'.format(cshape))
+        cshape = self.detect_curve(carstate, 95)
+        lane = self.detect_curve_lane(carstate)
+        m = carstate.distances_from_edge
+        _logger.info('dist: {}, CURVE: {} -- LANE: {}||| {} || {} || {}'.format(carstate.distance_from_start, cshape, lane, m[8], m[9], m[10]))
         if cshape == 0:
-            return 400
+            return 400, lane
         else:
-            return 600 - 550*abs(cshape)
+            return 600 - 550*abs(cshape), lane
 
-    def detect_curve(self, carstate: State):
+    def detect_curve_lane(self, carstate):
+        cshape = self.detect_curve(carstate, 40)
+        if cshape != 0:
+            if cshape < 0:
+                cshape = 2.0
+            else:
+                cshape = -2.0
+        else:
+            cshape = self.detect_curve(carstate, 180)
+            if cshape > 0:
+                cshape = 0.0
+            else:
+                cshape = -0.0
+        return cshape
+
+
+    def detect_curve(self, carstate: State, det_dist):
         m = carstate.distances_from_edge
         cshape = abs(m[8] - m[10])
         if cshape > 100:
             cshape = 100
         cshape /= 100
-        if carstate.distances_from_egde_valid and m[9] < 90:
+        if carstate.distances_from_egde_valid and m[9] < det_dist:
             if m[8] < m[9] < m[10]:
                 return 1 - cshape
             elif m[8] > m[9] > m[10]:
