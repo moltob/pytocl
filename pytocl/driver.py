@@ -57,9 +57,17 @@ class Driver:
         command.steering = self.steerFilter.filter(command.steering)
 
         # basic acceleration to target speed:
-        self.accelerator.update(carstate)
-        command.accelerator = self.accelerator.control
+        targetAcceleration = self.accelerator.update(carstate)
+        if targetAcceleration < 0:
+            command.brake = -targetAcceleration
+            command.accelerator = 0.0
+        else:
+            command.accelerator = targetAcceleration
+            command.brake = 0.0
+
         _logger.info('accelerator: {}'.format(command.accelerator))
+        _logger.info('brake: {}'.format(command.brake))
+        _logger.info('current velocity: {}'.format(carstate.speed_x))
 
         # gear shifting:
         _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))

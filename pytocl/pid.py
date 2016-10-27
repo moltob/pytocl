@@ -34,12 +34,12 @@ class PID:
         self.set_point = 0.0
         self.error = 0.0
 
-    def update(self, current_value):
+    def update(self, error):
         """
         Calculate PID output value for given reference input and feedback
         """
 
-        self.error = self.set_point - current_value
+        self.error = error
 
         self.P_value = self.Kp * self.error
         self.D_value = self.Kd * (self.error - self.Derivator)
