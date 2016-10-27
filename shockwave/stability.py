@@ -25,7 +25,8 @@ class Stability:
         command.gear = self.gearer.get_gear(state)
         command.focus = 0
 
-        _logger.info("Distance %d", state.distance_from_start)
+        if state.distance_from_start % 50 == 0:
+            _logger.info("Distance %d", state.distance_from_start)
 
         return command
 
