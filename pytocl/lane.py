@@ -34,11 +34,15 @@ class Lane:
                 max_dist = carstate.distances_from_edge[i]
                 max_idx = i
 
-        self.vel = max_dist * 0.6
+        if (max_dist<80):
+            self.vel = max_dist * 0.6
+        else: self.vel = max_dist
+        if carstate.distance_from_start >2440 and carstate.distance_from_start <2550:
+            self.vel=10
         self.ang = angles[max_idx]
 
 
-        print('velocity, angle : {}, {}'.format(self.vel, self.ang))
+        print('velocity, angle : {}, {}, {}'.format(self.vel, self.ang, carstate.distance_from_start))
      #   print('distance_from_edge: {}'.format(carstate.distances_from_edge))
 
     def velocity(self):
