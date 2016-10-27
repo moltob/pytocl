@@ -76,7 +76,7 @@ class Driver:
         if carstate.rpm > 9000 and carstate.gear < 6:
             _logger.info('switching up')
             command.gear = carstate.gear + 1
-        elif carstate.rpm < 2500 and carstate.gear > 1:
+        elif carstate.rpm < 3000 and carstate.gear > 1:
             _logger.info('switching down')
             command.gear = carstate.gear - 1
 

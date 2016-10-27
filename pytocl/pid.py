@@ -41,11 +41,11 @@ class PID:
 
         self.error = error
 
-        self.P_value = self.Kp * self.error
-        self.D_value = self.Kd * (self.error - self.Derivator)
-        self.Derivator = self.error
+        self.P_value = self.Kp * error
+        self.D_value = self.Kd * (error - self.Derivator)
+        self.Derivator = error
 
-        self.Integrator = self.Integrator + self.error
+        self.Integrator = self.Integrator + error
 
         if self.Integrator > self.Integrator_max:
             self.Integrator = self.Integrator_max

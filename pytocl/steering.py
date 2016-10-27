@@ -18,9 +18,9 @@ class Steering:
         else:
             self.track_position = self.LEFT
 
-    def update(self, carstate: State, side):
+    def update(self, carstate: State):
         # self.select_track_position(carstate)
-        self.track_position = side
+        self.track_position = self.CENTER
         if carstate.distances_from_egde_valid:
             if self.track_position == self.LEFT:
                 distance_error = 1.5 - carstate.distances_from_edge[0]
@@ -36,7 +36,6 @@ class Steering:
             else:
                 distance_error = carstate.distance_from_center * 8
 
-        _logger.info('distance_from_start {}'.format(carstate.distance_from_start))
         deltaAngle = max(min(0.7, (carstate.angle / 10.0) - distance_error * 0.1), -0.7)
         return self.control.update(deltaAngle)
 
