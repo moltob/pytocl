@@ -86,7 +86,22 @@ class VehicleControl:
         return speed
 
     def getBrakeAngleFromDecel(self, decel):
-        return 0.9
+        return 1
+
+    def getWantedZielwinkelInCurrentInvocation(self, zielwinkel, carstate: State, target: Coordinate):
+        if(carstate.speed_x == 0 or target.distance == 0):
+            time_till_targetpoint_s = 5
+        else:
+            time_till_targetpoint_s = target.distance / carstate.speed_x
+        expected_number_of_subsequent_invokations_till_targetpoint = time_till_targetpoint_s * 5 #50 invocations per second
+        wanted_zielwinkel_in_current_invokation = zielwinkel / expected_number_of_subsequent_invokations_till_targetpoint;
+        print(wanted_zielwinkel_in_current_invokation)
+
+        wanted_zielwinkel_in_current_invokation = zielwinkel    #der Scheiß davor funktioniert nicht -> überschreiben
+
+        return wanted_zielwinkel_in_current_invokation
+
+
 
     def driveTo(self, target: Coordinate, carstate: State) -> Command:
 
@@ -103,15 +118,7 @@ class VehicleControl:
      #   print( carstate.distance_from_center )
 
         wanted_zielwinkel = target.angle
-
-        if(carstate.speed_x == 0):
-            time_till_targetpoint_s = 5
-        else:
-            time_till_targetpoint_s = target.distance / carstate.speed_x
-        expected_number_of_subsequent_invokations_till_targetpoint = time_till_targetpoint_s * 50 #50 invocations per second
-        wanted_zielwinkel_in_current_invokation = wanted_zielwinkel / expected_number_of_subsequent_invokations_till_targetpoint;
-        print(wanted_zielwinkel_in_current_invokation)
-
+        wanted_zielwinkel_in_current_invokation = self.getWantedZielwinkelInCurrentInvocation(wanted_zielwinkel, carstate, target)
         radwinkel = self.calc_radwinkel(wanted_zielwinkel_in_current_invokation)
         lenkradwinkel = self.calc_lenkradwinkel(radwinkel)
 
