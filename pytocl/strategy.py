@@ -29,7 +29,7 @@ class StrategyController:
         if cshape == 0:
             return 400
         else:
-            return 500 - 450*abs(cshape)
+            return 600 - 550*abs(cshape)
 
     def detect_curve(self, carstate: State):
         m = carstate.distances_from_edge
