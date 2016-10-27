@@ -84,7 +84,7 @@ class Driver:
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
         steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, 0)
 
-        command.steering = (4*steering_stellgr_angle + steering_stellgr_dist) / 5
+        command.steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 4
 
         tar_speed = self.calc_target_speed(carstate)
 
@@ -124,11 +124,15 @@ class Driver:
         if cur_speed < target_speed * MPS_PER_KMH:
             self.accelerator += 0.1
             self.brake = 0
+        #elif cur_speed > target_speed * MPS_PER_KMH:
         elif (cur_speed - (target_speed * MPS_PER_KMH)) > 50:
             self.brake += 0.1
             self.accelerator = 0
         elif cur_speed > target_speed * MPS_PER_KMH:
-            self.brake -= 0.1
+            if self.brake <= 0.3:
+                self.brake = 0.3
+            else:
+                self.brake -= 0.1
             self.accelerator = 0
         else:
             self.accelerator = 0
@@ -140,13 +144,15 @@ class Driver:
         self.brake = max(-1, self.brake)
 
     def calc_target_speed(self, carstate: State):
+        if carstate.distances_from_edge[9] < 20:
+            return 50
         if carstate.distances_from_edge[9] < 35:
-            return 55
+            return 75
         if carstate.distances_from_edge[9] < 50:
-            return 80
+            return 120
         if carstate.distances_from_edge[9] < 100:
-            return 100
+            return 180
         if carstate.distances_from_edge[9] < 150:
-            return 150
+            return 220
         else:
-            return 200
+            return 260
