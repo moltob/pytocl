@@ -137,8 +137,8 @@ class Driver:
         command = Command()
 
         #distCenterKp = 10.0
-        distCenterKp = 0
-        distCenterKd = 0
+        distCenterKp = 2.5
+        distCenterKd = 4
         distCenterKi = 0.0 #10.0
 
         speedKp = 15.0
@@ -157,10 +157,15 @@ class Driver:
 
         #Track planing:
         maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
-        if(maxDistance != -1):
+        if(maxDistance != -1 and abs(carstate.angle)<90):
             angleAheadFree = - self.directions[maxDistanceIndex]
+            distCenterKp = 0
+            distCenterKd = 0
+            distCenterKi = 0
         else:
             angleAheadFree = carstate.angle
+
+
         printMaxDistanceAhead = 1
         if (printMaxDistanceAhead):
             if(maxDistance != -1):
