@@ -91,7 +91,7 @@ class Driver:
         """
 
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        return self.controlCar(State, tar_speed, 0.5, 20, 0.5, 20)
+        return self.controlCar(carstate, tar_speed, 0.5, 20, 0.5, 20)
 
     def controlCar(self, carstate: State, tar_speed, K_acc, T_acc, K_brake, T_brake) -> Command:
         """basic function to control car on street"""
@@ -156,7 +156,8 @@ class Driver:
             self.data_logger.log(carstate, command)
 
         _logger.info("Distance: " + str(carstate.distance_from_start))
-        pass
+
+        return command
 
     def calc_target_speed(self, carstate: State):
         if carstate.distances_from_edge[9] < 20:
