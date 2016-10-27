@@ -14,6 +14,9 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
+
+    CURVE_DETECTION_THRESHOLD = 55
+
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
@@ -57,51 +60,8 @@ class Driver:
             _logger.info('switching down')
             command.gear = carstate.gear - 1
 
-    def select_steering(self, carstate: State, command: Command):
-        #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
-
-
-        # first drive parallel to tangente
-        # if distance from center more than 0.1 normalized
-        #   correct against center
-        # if angle_diversion increasing - reduce speed in steps of 5%
-        # else if decreasing - increase speed
-        # else reach max of 120
-
-#         #steering_angle_correction = carstate.angle
-# #        self.currentAngleCorr = (carstate.angle/21 + self.currentAngleCorr)/2
-#         if (abs(self.carstate_old.angle) > 0.0):
-#             curr_angle_diff_quotient = abs(self.carstate_old.angle - carstate.angle) / abs(self.carstate_old.angle)
-#         else:
-#             curr_angle_diff_quotient = 0.0
-#
-#         if curr_angle_diff_quotient < 0.01 :
-#             self.target_velocity = 140
-#         else:
-#             if (self.angle_diff_quotient < curr_angle_diff_quotient*0.8 ) :
-#                 self.target_velocity -=20
-#             else:
-#                 self.target_velocity = 140
-#
-#         # if self.target_velocity < 120:
-#         #     print("old angle diff quotient " + str(self.angle_diff_quotient))
-#         #     print("curr angle diff quotient " + str(curr_angle_diff_quotient))
-#         #     print("target velocity " + str(self.target_velocity))
-#         #     print("-----------------------")
-#
-#         self.angle_diff_quotient = curr_angle_diff_quotient
-
-
+    def control_steering_angle (self, carstate: State, command: Command):
         self.currentAngleCorr = 1.0*(carstate.angle / 21) + 0.0*(self.currentAngleCorr)
-
-        # # korrektur wegen zu hohem angle
-        # if (abs(carstate.angle) < 2):
-        #     pass
-        # elif (self.carstate_old.angle < carstate.angle and self.currentAngleCorr < 1):
-        #     self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
-        # elif (self.angle_old > carstate.angle and self.currentAngleCorr > -1):
-        #     self.currentAngleCorr = self.currentAngleCorr - 0.1#*(angle_diff_quat)
-
 
         # korrektur zum zentrum
         if (carstate.distance_from_center > 0.1  and self.currentAngleCorr < 1):
@@ -109,38 +69,26 @@ class Driver:
         elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > -1):
             self.currentAngleCorr += 0.2
 
-
-        # print (self.carstate_old.angle)
-        # print (carstate.angle)
-        # print (self.currentAngleCorr)
-        # print ("-----------------------")
+        command.steering = self.currentAngleCorr
 
 
-        dist_from_edge_mitte = (carstate.distances_from_edge[7]+
+    def control_target_velocity (self, carstate: State):
+
+        dist_from_edge_mitte = (carstate.distances_from_edge[7] +
                                 carstate.distances_from_edge[8] +
                                 carstate.distances_from_edge[9] +
                                 carstate.distances_from_edge[10] +
                                 carstate.distances_from_edge[11]) / 5
 
-        #dist_from_edge_mitte = carstate.distances_from_edge[9]
         print("dist edge mitte" + str(dist_from_edge_mitte))
-        # if (dist_from_edge_mitte < 50):
-        #     self.target_velocity -= 15
-        # elif (dist_from_edge_mitte < 20):
-        #     if (self.prev_dist_from_edge_mitte > dist_from_edge_mitte):
-        #         self.target_velocity -= 25
-        #     else:
-        #         self.target_velocity += 15
-        # elif (dist_from_edge_mitte > 50):
-        #     self.target_velocity = 180
 
-        if (dist_from_edge_mitte < 55):
-            #if leaving turn
+        if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD):
+            # if leaving turn
             if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
                 self.target_velocity += 15
             else:
                 self.target_velocity -= 25
-        elif dist_from_edge_mitte >= 55:
+        elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
             self.target_velocity = 190
 
         if self.target_velocity < 60:
@@ -148,19 +96,12 @@ class Driver:
 
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
-        # if abs(self.currentAngleCorr) > 0.06:
-        #     self.target_velocity -= 25
-        #
-        #     if self.target_velocity < 40:
-        #         self.target_velocity = 40;
-        # else:
-        #     self.target_velocity = 120
-        #
-        # print(self.target_velocity)
-        # print(self.currentAngleCorr)
 
-        # command.steering = (carstate.angle*self.currentAngleCorr);
-        command.steering = self.currentAngleCorr
+    def select_steering(self, carstate: State, command: Command):
+
+        self.control_steering_angle(carstate, command)
+        self.control_target_velocity(carstate)
+
 
     def select_acceleration(self, carstate: State, command: Command):
         # if carstate.speed_x < 80 * MPS_PER_KMH:
