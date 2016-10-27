@@ -1,5 +1,5 @@
 from pytocl.car import State, Command, MPS_PER_KMH
-from pytocl.lane import lane
+from pytocl.lane import Lane
 
 
 class Dynamic:
@@ -22,17 +22,17 @@ class Dynamic:
             # _logger.info('switching down')
             self.gear = carstate.gear - 1
 
-    def simple(self, carstate, lane):
+    def simple(self, carstate, mylane: Lane):
 
         # dummy steering control:
          #if ((carstate.distance_from_center < -0.5) or (carstate.distance_from_center > 0.5)):
          #    self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
-         speed = lane.velocity()
-         angle = lane.angle()
+         speed = mylane.velocity
+         angle = mylane.angle
 
-         if (speed < carstate.speed_x):
-                if (carstate.speed_x > carstate.speed_y):
+         if (speed > carstate.speed_x):
+                if (carstate.speed_x < carstate.speed_y):
                     self.accelerator += 0.5
                     self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 

@@ -3,6 +3,7 @@ import logging
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.dynamic import Dynamic
+from pytocl.lane import Lane
 _logger = logging.getLogger(__name__)
 
 
@@ -15,7 +16,6 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
     dynamic = Dynamic()
-    #mylane = lane()
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
