@@ -3,6 +3,7 @@ import logging
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.pid import PID
+from pytocl.speedlist import SpeedList
 
 _logger = logging.getLogger(__name__)
 
@@ -22,8 +23,34 @@ class Driver:
         self.pid_angle = PID(2.5, 0.01, 0.7)
         self.pid_dist = PID(2.5, 0.01, 0.7)
         self.pid_speed = PID(2.5, 0.01, 0.7)
+        self.speedlist = SpeedList()
 
     @property
+    def createCorkScrewSpeedlist(self):
+        self.speedlist.add(0,70)
+        self.speedlist.add(50,200)
+        self.speedlist.add(200,150)
+        self.speedlist.add(250,200)
+        self.speedlist.add(400,80)
+        self.speedlist.add(500,200)
+        self.speedlist.add(720,80)
+        self.speedlist.add(800,200)
+        self.speedlist.add(950,100)
+        self.speedlist.add(1020,250)
+        self.speedlist.add(1450,70)
+        self.speedlist.add(1550,300)
+        self.speedlist.add(1900,70)
+        self.speedlist.add(1940,300)
+        self.speedlist.add(2340,70)
+        self.speedlist.add(2380,30)
+        self.speedlist.add(2500,150)
+        self.speedlist.add(2700,70)
+        self.speedlist.add(2770,200)
+        self.speedlist.add(2930,100)
+        self.speedlist.add(2990,200)
+        self.speedlist.add(3230,30)
+        self.speedlist.add(3320,200)
+    
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
 
@@ -58,36 +85,27 @@ class Driver:
 
         command.steering = (4*steering_stellgr_angle + steering_stellgr_dist) / 5
 
-        # basic acceleration to target speed:
-        #if carstate.speed_x < 40 * MPS_PER_KMH:
-        #    self.accelerator += 0.1
-        #else:
-        #    self.accelerator = 0
-        #self.accelerator = min(1, self.accelerator)
-        #self.accelerator = max(-1, self.accelerator)
-
-
         tar_speed = self.calc_target_speed(carstate)
 
-        speed_control = self.pid_speed.control(carstate.speed_x, tar_speed * MPS_PER_KMH)
+        #speed_control = self.pid_speed.control(carstate.speed_x, tar_speed * MPS_PER_KMH)
 
-        _logger.info('speed_control: {}'.format(speed_control))
+        #_logger.info('speed_control: {}'.format(speed_control))
 
         self.accel_and_brake(carstate.speed_x, tar_speed)
 
         command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
+        #_logger.info('accelerator: {}'.format(command.accelerator))
 
         command.brake = self.brake
 
         # gear shifting:
-        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
+        #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 7000 and carstate.gear < 6:
-            _logger.info('switching up')
+            #_logger.info('switching up')
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
+            #_logger.info('switching down')
             command.gear = carstate.gear - 1
 
         if self.data_logger:
