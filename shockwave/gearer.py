@@ -3,7 +3,9 @@ from pytocl.car import State
 
 class Gearer:
 
-    @staticmethod
+    def __init__(self, plan):
+        self.plan = plan
+
     def get_gear(self, state: State):
         gear = state.gear or 1
         if state.rpm > 9000 and state.gear < 5:
