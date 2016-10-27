@@ -94,16 +94,25 @@ class VehicleControl:
         command = Command()
 
 #        target.angle = self.mock_lenkwinkel(carstate) # weg!!!!
-        target.angle = carstate.angle
-        target.distance = 2
-        if( carstate.distance_from_center > .1):
-            target.angle+=3
-        if( carstate.distance_from_center < -.1):
-            target.angle-=3
-        print( carstate.distance_from_center )
+     #   target.angle = carstate.angle
+     #   target.distance = 3
+     #   if( carstate.distance_from_center > .1):
+     #       target.angle-=5
+     #   if( carstate.distance_from_center < -.1):
+     #       target.angle+=5
+     #   print( carstate.distance_from_center )
 
         wanted_zielwinkel = target.angle
-        radwinkel = self.calc_radwinkel(wanted_zielwinkel)
+
+        if(carstate.speed_x == 0):
+            time_till_targetpoint_s = 5
+        else:
+            time_till_targetpoint_s = target.distance / carstate.speed_x
+        expected_number_of_subsequent_invokations_till_targetpoint = time_till_targetpoint_s * 50 #50 invocations per second
+        wanted_zielwinkel_in_current_invokation = wanted_zielwinkel / expected_number_of_subsequent_invokations_till_targetpoint;
+        print(wanted_zielwinkel_in_current_invokation)
+
+        radwinkel = self.calc_radwinkel(wanted_zielwinkel_in_current_invokation)
         lenkradwinkel = self.calc_lenkradwinkel(radwinkel)
 
  #       print('#### target lenk: {}'.format(wanted_zielwinkel))
