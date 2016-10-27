@@ -50,7 +50,7 @@ class Driver:
         track.
         """
         (speed, target_pos) = self.strategy_controller.control(carstate)
-        next_command = self.stability_controller.control(50, 0, carstate)
+        next_command = self.stability_controller.control(speed, target_pos, carstate)
 
         if self.data_logger:
             self.data_logger.log(carstate, next_command)
