@@ -76,8 +76,9 @@ class Lane:
         #self.ang = self.new_ang(angles[max_idx])
         self.ang = angles[max_idx]
         #Lane.last_ang = self.ang
-        if carstate.distance_from_start >2400 and carstate.distance_from_start <2600:
-            print(' #############   Winkel ' +  str(self.ang) + '####################')
+        if carstate.distance_from_start >2400 and carstate.distance_from_start <2499:
+            self.vel=10
+            print(' #############   Winkel ' +  str(self.ang) + '    ####################')
 
         print('velocity, angle : {}, {}, {}, {}'.format(max_dist, self.vel, self.ang, carstate.distance_from_start))
      #   print('distance_from_edge: {}'.format(carstate.distances_from_edge))
