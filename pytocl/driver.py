@@ -1,6 +1,6 @@
 import logging
 
-from pytocl.lowpass import LowPass
+from pytocl.steering import Steering
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 
@@ -19,9 +19,8 @@ class Driver:
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = Acceleration()
-        self.steerFilter = LowPass(iv = 0.0, factor = 0.5)
-
+        self.accelerator = 0.0
+        self.steeringControl = Steering()
 
     @property
     def range_finder_angles(self):
@@ -53,8 +52,9 @@ class Driver:
         command = Command()
 
         # dummy steering control:
-        command.steering = ((carstate.angle/90.0) - (carstate.distance_from_center * 0))
-        command.steering = self.steerFilter.filter(command.steering)
+        # command.steering = ((carstate.angle/90.0) - (carstate.distance_from_center * 0))
+        # command.steering = self.steerFilter.filter(command.steering)
+        command.steering = self.steeringControl.update(carstate)
 
         # basic acceleration to target speed:
         targetAcceleration = self.accelerator.update(carstate)
