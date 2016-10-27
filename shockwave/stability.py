@@ -13,7 +13,7 @@ class Stability:
 
     def get_command(self, state: State) -> Command:
         command = Command()
-        command.steering = 0
+        command.steering = self.steerer.get_steering_angle(state)
 
         ac = self.accelerator.get_acceleration(state, self.plan)
         command.accelerator = ac if ac > 0 else 0
