@@ -4,6 +4,8 @@ from pytocl.lowpass import LowPass
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 
+from pytocl.acceleration import Acceleration
+
 _logger = logging.getLogger(__name__)
 
 
@@ -17,8 +19,7 @@ class Driver:
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
-        self.accFilter = LowPass(iv = 0.0, factor = 0.6)
+        self.accelerator = Acceleration()
         self.steerFilter = LowPass(iv = 0.0, factor = 0.5)
 
 
@@ -56,16 +57,8 @@ class Driver:
         command.steering = self.steerFilter.filter(command.steering)
 
         # basic acceleration to target speed:
-        if carstate.speed_x < 50 * MPS_PER_KMH:
-            self.accelerator += 0.1
-        else:
-            self.accelerator = 0
-
-        self.accelerator = self.accFilter.filter(self.accelerator)
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-
-        command.accelerator = self.accelerator
+        self.accelerator.update(carstate)
+        command.accelerator = self.accelerator.control
         _logger.info('accelerator: {}'.format(command.accelerator))
 
         # gear shifting:
