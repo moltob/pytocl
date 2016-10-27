@@ -22,23 +22,23 @@ class TrajectoryPlanner:
 
         for index,measurement in enumerate(carstate.distances_from_edge):
             if measurement > -1:
-                trackLimitCoordinatesX.append(measurement * math.cos(self.rangeFinderAngles[index]/360))
-                trackLimitCoordinatesY.append(measurement * math.sin(self.rangeFinderAngles[index]/360))
+                trackLimitCoordinatesX.append(measurement * math.cos(self.rangeFinderAngles[index]/180*math.pi))
+                trackLimitCoordinatesY.append(-1*measurement * math.sin(self.rangeFinderAngles[index]/180*math.pi))
 
         leftTrackBorderX = 0
         leftTrackBorderY = 0
         rightTrackBorderX = 0
         rightTrackBorderY = 0
         for x, y in zip(trackLimitCoordinatesX, trackLimitCoordinatesY):
-            if x > leftTrackBorderX and y > leftTrackBorderY:
+            if x > leftTrackBorderX and y > 0:
                 leftTrackBorderX = x
                 leftTrackBorderY = y
 
-            if x > leftTrackBorderX and y < leftTrackBorderY:
+            if x > leftTrackBorderX and y < 0:
                 rightTrackBorderX = x
                 rightTrackBorderY = y
 
-        targetX = min(rightTrackBorderX, leftTrackBorderX) + math.fabs(leftTrackBorderX - rightTrackBorderX)/2
+        targetX = (rightTrackBorderX + leftTrackBorderX)/2
         targetY = (leftTrackBorderY + rightTrackBorderY)/2
 
         distance = math.sqrt(targetX*targetX + targetY*targetY)
@@ -47,5 +47,12 @@ class TrajectoryPlanner:
             angle = math.atan(targetY/targetX)*180/math.pi
         else:
             angle = 0
+
+        #print(carstate.distances_from_edge)
+        #print(trackLimitCoordinatesX)
+        #print(trackLimitCoordinatesY)
+        #print(leftTrackBorderX, leftTrackBorderY, rightTrackBorderX, rightTrackBorderY)
+        #print(targetX, targetY)
+        print(distance, angle)
 
         return Coordinate(distance, angle)
