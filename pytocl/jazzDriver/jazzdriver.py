@@ -3,6 +3,7 @@ import logging
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from .vehicleControl import VehicleControl
+from .VehicleControl2 import VehicleControl2
 from .trajectoryPlanner import TrajectoryPlanner
 
 _logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ class JazzDriver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.trajectoryPlanner = TrajectoryPlanner()
-        self.vehicleControl = VehicleControl()
+        self.vehicleControl = VehicleControl2()
 
     def on_shutdown(self):
         """Server requested driver shutdown.

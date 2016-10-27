@@ -4,7 +4,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-class VehicleControl:
+class VehicleControl2:
     def __init__(self):
         self.accelerator = 0.0
         self.steering = 0
