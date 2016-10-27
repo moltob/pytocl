@@ -50,8 +50,9 @@ class Driver:
         """
         command = Command()
         lane = Lane()
+        lane.lookfwd(carstate)
         self.dynamic.simple(carstate,lane)
-        command.steering = self.dynamic.speed
+        command.steering = self.dynamic.steering
         command.accelerator = self.dynamic.accelerator
         command.brake = self.dynamic.brake
         command.gear = self.dynamic.gear
