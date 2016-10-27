@@ -81,37 +81,34 @@ class Driver:
         self.curves = list()
         self.speedSetPoint = 0.0
 
-        c1 = Curve(350, 500, 80)
+        c0 = Curve(100, 150, 150)
+        self.curves.append(c0)
+
+        c1 = Curve(350, 450, 80)
         self.curves.append(c1)
 
-        c2 = Curve(700, 750, 90)
+        c2 = Curve(700, 750, 100)
         self.curves.append(c2)
 
-        c3 = Curve(970, 1100, 140)
+        c3 = Curve(970, 1000, 140)
         self.curves.append(c3)
 
-        c4 = Curve(1430, 1550, 120)
+        c4 = Curve(1450, 1500, 140)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 110)
+        c5 = Curve(1850, 1900, 110)
         self.curves.append(c5)
 
-        c6pre = Curve(2300, 2350, 150)
-        self.curves.append(c6pre)
-
-        c6pre2 = Curve(2350, 2400, 120)
-        self.curves.append(c6pre2)
-
-        c6 = Curve(2350, 2500, 60)
+        c6 = Curve(2350, 2500, 50)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2700, 120)
+        c7 = Curve(2600, 2650, 120)
         self.curves.append(c7)
 
-        c8 = Curve(2900, 3000, 130)
+        c8 = Curve(2900, 2950, 130)
         self.curves.append(c8)
 
-        c9 = Curve(3200, 3285, 70)
+        c9 = Curve(3200, 3285, 80)
         self.curves.append(c9)
 
 
@@ -150,6 +147,8 @@ class Driver:
         speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
         trackDistance = carstate.distance_from_start
 
+        if(printDistance):
+            print("DISTANCE = " + str(trackDistance))
 
         trackPos_SetPoint = 0.0
         angle_SetPoint = 0.0
@@ -180,9 +179,9 @@ class Driver:
         min_wheel_speed = min(carstate.wheel_velocities)
         #print('WHEEL_SPEED=' + str(min_wheel_speed))
 
-        if(command.brake > 0.0 and min_wheel_speed < 3000):
+        if(command.brake > 0.0 and min_wheel_speed < 1000):
             print('!!!!!!! ABS')
-            #command.brake = 0.0
+            command.brake = 0.0
 
         if(command.steering > 1):
             command.steering = 1
