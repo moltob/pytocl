@@ -4,6 +4,7 @@ from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.pid import PID
 from pytocl.speedlist import SpeedList
+from pytocl.filter import *
 
 _logger = logging.getLogger(__name__)
 
@@ -20,36 +21,46 @@ class Driver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.brake = 0.0
-        self.pid_angle = PID(2.5, 0.01, 0.7)
-        self.pid_dist = PID(2.5, 0.01, 0.7)
-        self.pid_speed = PID(2.5, 0.01, 0.7)
+        self.pid_angle = PID(8, 0.01, 1.2)
+        self.pid_dist = PID(1.5, 0.02, 0.2)
+        self.pid_speed = PID(20, 0, 0)
         self.speedlist = SpeedList()
         self.createCorkScrewSpeedlist()
+        self.acc_counter = 0
+        self.brake_counter = 0
 
     def createCorkScrewSpeedlist(self):
-        self.speedlist.add(0,70)
-        self.speedlist.add(50,100)
-        self.speedlist.add(200,100)
-        self.speedlist.add(250,100)
-        self.speedlist.add(400,80)
+        self.speedlist.add(150,150)
+        self.speedlist.add(250,125)
+        self.speedlist.add(300,100)
+        self.speedlist.add(350,80)
         self.speedlist.add(500,150)
+        self.speedlist.add(680,100)
         self.speedlist.add(720,50)
         self.speedlist.add(800,150)
         self.speedlist.add(950,100)
         self.speedlist.add(1020,150)
-        self.speedlist.add(1450,70)
-        self.speedlist.add(1550,100)
+        self.speedlist.add(1200,125)
+        self.speedlist.add(1450,100)
+        self.speedlist.add(1550,150)
+        self.speedlist.add(1700,130)
+        self.speedlist.add(1800,100)
+        self.speedlist.add(1850,85)
         self.speedlist.add(1900,70)
-        self.speedlist.add(1940,150)
+        self.speedlist.add(1940,80)
+        self.speedlist.add(2000,250)
+        self.speedlist.add(2200,120)
         self.speedlist.add(2340,70)
-        self.speedlist.add(2380,30)
+        self.speedlist.add(2395,50)
+        self.speedlist.add(2450,30)
         self.speedlist.add(2500,150)
         self.speedlist.add(2700,70)
         self.speedlist.add(2770,150)
-        self.speedlist.add(2930,100)
-        self.speedlist.add(2990,150)
+        self.speedlist.add(2930,70)
+        self.speedlist.add(2990,200)
+        self.speedlist.add(3100,80)
         self.speedlist.add(3230,30)
-        self.speedlist.add(3320,150)
+        self.speedlist.add(3320,200)
 
     @property
     def range_finder_angles(self):
@@ -84,23 +95,47 @@ class Driver:
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
         steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, 0)
 
-        command.steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 4
+        command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
 
-        tar_speed = self.calc_target_speed(carstate)
+        #tar_speed = self.calc_target_speed(carstate)
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
 
         #speed_control = self.pid_speed.control(carstate.speed_x, tar_speed * MPS_PER_KMH)
 
         #_logger.info('speed_control: {}'.format(speed_control))
+        #speed_control = speed_control / MPS_PER_KMH
+        speed_control = (tar_speed * MPS_PER_KMH) - carstate.speed_x
+        if speed_control > 0:
+            self.acc_counter += 1
+            self.accelerator = pt1up(1, 20, self.acc_counter)
+            #self.accelerator = min(100,speed_control) / 100
+            self.brake = 0
+            self.brake_counter = 0
+        elif speed_control < 0:
+            #self.brake = -(max(-100,speed_control) / 100)
+            self.brake_counter += 1
+            self.brake = pt1up(1, 20, self.brake_counter)
+            self.accelerator = 0
+            self.acc_counter = 0
+        else:
+            self.accelerator = 0
+            self.brake = 0
+            self.brake_counter = 0
+            self.acc_counter = 0
 
-        #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start)
+        self.accelerator = min(1, self.accelerator)
+        self.accelerator = max(-1, self.accelerator)
+        self.brake = min(1, self.brake)
+        self.brake = max(-1, self.brake)
 
-        self.accel_and_brake(carstate.speed_x, tar_speed)
+
+        #self.accel_and_brake(carstate.speed_x, tar_speed)
 
         command.accelerator = self.accelerator
-        #_logger.info('accelerator: {}'.format(command.accelerator))
+        _logger.info('accelerator: {}'.format(command.accelerator))
 
         command.brake = self.brake
-
+        _logger.info('brake: {}'.format(command.brake))
         # gear shifting:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
@@ -124,16 +159,16 @@ class Driver:
         if cur_speed < target_speed * MPS_PER_KMH:
             self.accelerator += 0.1
             self.brake = 0
-        #elif cur_speed > target_speed * MPS_PER_KMH:
-        elif (cur_speed - (target_speed * MPS_PER_KMH)) > 50:
+        elif cur_speed > (target_speed + 10) * MPS_PER_KMH:
+        #elif (cur_speed - (target_speed * MPS_PER_KMH)) > 50:
             self.brake += 0.1
             self.accelerator = 0
-        elif cur_speed > target_speed * MPS_PER_KMH:
-            if self.brake <= 0.3:
-                self.brake = 0.3
-            else:
-                self.brake -= 0.1
-            self.accelerator = 0
+        #elif cur_speed > target_speed * MPS_PER_KMH:
+        #    if self.brake <= 0.3:
+        #        self.brake = 0.3
+        #    else:
+        #        self.brake -= 0.1
+        #    self.accelerator = 0
         else:
             self.accelerator = 0
             self.brake = 0
