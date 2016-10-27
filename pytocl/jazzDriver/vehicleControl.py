@@ -4,6 +4,9 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+TRACK_WIDTH = 12
+
+
 class VehicleControl:
     def __init__(self):
         self.gear = 0
@@ -21,8 +24,6 @@ class VehicleControl:
     def calc_radwinkel(self, wanted_zielwinkel):
         return VehicleControl.saturate(wanted_zielwinkel, -21, 21)  #weil nur in diesem bereich lenkbar
 
-#    def mock_lenkwinkel(self, carstate):
-#        return (carstate.angle - carstate.distance_from_center * 0.5)
 
     def calc_max_accel_angle(self, radwinkel):
         if(radwinkel < 2):
@@ -59,26 +60,31 @@ class VehicleControl:
     def calc_gear(self, target: Coordinate, carstate: State):
         self.gear = carstate.gear or 1
         if carstate.rpm > 9000 and carstate.gear < 6:
-            _logger.info('switching up')
+#            _logger.info('switching up')
             self.gear = carstate.gear + 1
         elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
+#            _logger.info('switching down')
             self.gear = carstate.gear - 1
 
+    def isOffroad(self, carstate: State):
+        return (carstate.distance_from_center > ((TRACK_WIDTH/2)-2) )
 
-    def get_max_grippy_speed(self, radwinkel):
-        if(radwinkel < 2):
-            speed_mph = 300
-        elif (radwinkel < 4):
-            speed_mph = 200
-        elif(radwinkel < 6):
-            speed_mph = 100
-        elif(radwinkel < 8):
-            speed_mph = 80
-        elif(radwinkel < 10):
-            speed_mph = 60
+    def get_max_grippy_speed(self, radwinkel, carstate:State):
+        if( self.isOffroad(carstate)):
+            speed_mph = 30
         else:
-            speed_mph = 60
+            if(radwinkel < 2):
+                speed_mph = 300
+            elif (radwinkel < 4):
+                speed_mph = 200
+            elif(radwinkel < 6):
+                speed_mph = 100
+            elif(radwinkel < 8):
+                speed_mph = 80
+            elif(radwinkel < 10):
+                speed_mph = 60
+            else:
+                speed_mph = 60
 
         speed = speed_mph/3.6  #mps
         #todo: schön machen
@@ -86,7 +92,19 @@ class VehicleControl:
         return speed
 
     def getBrakeAngleFromDecel(self, decel):
-        return 1
+        if(decel > 20):      #if so many meter per square second
+            return 1        #voll in die eisen
+        elif(decel > 16):
+            return .9
+        elif(decel > 12):
+            return .8
+        elif(decel > 8):
+            return .7
+        elif(decel > 4):
+            return .6
+        else:
+            return .5
+
 
     def getWantedZielwinkelInCurrentInvocation(self, zielwinkel, carstate: State, target: Coordinate):
         if(carstate.speed_x == 0 or target.distance == 0):
@@ -95,11 +113,11 @@ class VehicleControl:
             time_till_targetpoint_s = target.distance / carstate.speed_x
         expected_number_of_subsequent_invokations_till_targetpoint = time_till_targetpoint_s * 5 #50 invocations per second
         wanted_zielwinkel_in_current_invokation = zielwinkel / expected_number_of_subsequent_invokations_till_targetpoint;
-        print(wanted_zielwinkel_in_current_invokation)
 
         wanted_zielwinkel_in_current_invokation = zielwinkel    #der Scheiß davor funktioniert nicht -> überschreiben
 
         return wanted_zielwinkel_in_current_invokation
+
 
 
 
@@ -108,31 +126,35 @@ class VehicleControl:
 #        _logger.info('carstate.rpm, carstate.gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command = Command()
 
-#        target.angle = self.mock_lenkwinkel(carstate) # weg!!!!
-     #   target.angle = carstate.angle
-     #   target.distance = 3
-     #   if( carstate.distance_from_center > .1):
-     #       target.angle-=5
-     #   if( carstate.distance_from_center < -.1):
-     #       target.angle+=5
-     #   print( carstate.distance_from_center )
-
         wanted_zielwinkel = target.angle
         wanted_zielwinkel_in_current_invokation = self.getWantedZielwinkelInCurrentInvocation(wanted_zielwinkel, carstate, target)
         radwinkel = self.calc_radwinkel(wanted_zielwinkel_in_current_invokation)
         lenkradwinkel = self.calc_lenkradwinkel(radwinkel)
+
+        #when we're offroad then we dot get distances. set it hard to 2 meters. max_grippy_speed will also be reduced then
+        if(self.isOffroad(carstate)):
+            target.distance = 2
 
  #       print('#### target lenk: {}'.format(wanted_zielwinkel))
         #wie schnell können wir beschleunigen ohne abzufliegen
         max_accel_angle = self.calc_max_accel_angle(radwinkel)
         self.calc_gear(target, carstate)
 
-        radwinkel_at_targetpoint = 10      #damit wir nicht mit geraden rädern ankommen und denken wir würden nicht rutschen
-        max_grippy_speed_at_targetpoint = self.get_max_grippy_speed(radwinkel_at_targetpoint)
+#        radwinkel_at_targetpoint = 10      #damit wir nicht mit geraden rädern ankommen und denken wir würden nicht rutschen
+        max_grippy_speed_at_targetpoint = self.get_max_grippy_speed(radwinkel, carstate)
+
 
         #calc acceleration and brake force
         required_accel_angle = 0;
         required_brake_angle = 0;
+
+        # if( target.distance < 15 and carstate.speed_x > max_grippy_speed_at_targetpoint):
+        #     required_accel_angle = 0
+        #     required_brake_angle = self.calc_max_decel_angle(radwinkel, carstate.speed_x)
+        # else:
+        #     required_accel_angle = self.calc_max_accel_angle(radwinkel)
+        #     required_brake_angle = 0
+
 
         #sind wir unterhalt max_grip_speed?
         if( carstate.speed_x > max_grippy_speed_at_targetpoint  ): #todo: alle speed-komponenten berücksichtigen?
@@ -147,6 +169,7 @@ class VehicleControl:
                 if( required_brake_angle > (max_possible_decel_angle - .1) ):
                     #sind nahe grippy_brake-Grenze -> in die eisen gehen
                     required_accel_angle = 0
+                    _logger.info('max_grippy_speed={}, time_till_target={}, requied_decel={}, reqBrackeAngle={}, maxBrakeAngle={}, distance={}'.format(max_grippy_speed_at_targetpoint, time_till_targetpoint, required_decel, required_brake_angle, max_possible_decel_angle, target.distance))
                 else:
                     #noch nicht nähe brake grenze -> weiter gas geben
                     required_brake_angle = 0

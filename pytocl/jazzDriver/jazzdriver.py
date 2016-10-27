@@ -26,8 +26,6 @@ class JazzDriver:
 
     def drive(self, carstate: State) -> Command:
 
-        _logger.info('switching up')
-
         coordinate = self.trajectoryPlanner.update(carstate)
         command = self.vehicleControl.driveTo(coordinate, carstate)
 
