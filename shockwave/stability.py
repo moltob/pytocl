@@ -2,7 +2,9 @@ from pytocl.car import Command, State
 from shockwave.accelerator import Accelerator
 from shockwave.gearer import Gearer
 from shockwave.steerer import Steerer
+import logging
 
+_logger = logging.getLogger(__name__)
 
 class Stability:
     def __init__(self, plan):
@@ -21,6 +23,10 @@ class Stability:
 
         command.gear = self.gearer.get_gear(state)
         command.focus = 0
+
+        _logger.info("Steering %f", command.steering)
+        _logger.info("Accelerate %f", ac)
+
         return command
 
 
