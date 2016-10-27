@@ -17,9 +17,12 @@ class Driver:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
-        self.angle_old = 1
-        self.currentAngleCorr = 0.3
+        self.breaking = 0.0
+        self.currentAngleCorr = 0.0
         self.carstate_old = None
+        self.angle_diff_quotient = 0.0
+        self.target_velocity = 50
+        self.prev_dist_from_edge_mitte = 0.0
 
     @property
 
@@ -57,104 +60,141 @@ class Driver:
     def select_steering(self, carstate: State, command: Command):
         #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
-        if ((abs(self.angle_old-carstate.angle) < 10)):
-            self.currentAngleCorr = 0.3
-        elif (self.angle_old < carstate.angle and self.currentAngleCorr < 0.9):
-            self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
-        elif (self.angle_old > carstate.angle and self.currentAngleCorr > 0.3):
-            self.currentAngleCorr = self.currentAngleCorr - 0.1#*(angle_diff_quat)
 
-        if ((abs(self.angle_old-carstate.angle) < 10)):
-            pass
-        elif (carstate.distance_from_center > 0.1 and self.currentAngleCorr < 0.9):
-            self.currentAngleCorr += 0.1
-        elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > 0.3):
-            self.currentAngleCorr -= 0.1
+        # first drive parallel to tangente
+        # if distance from center more than 0.1 normalized
+        #   correct against center
+        # if angle_diversion increasing - reduce speed in steps of 5%
+        # else if decreasing - increase speed
+        # else reach max of 120
 
-        #print ((abs(self.angle_old - carstate.angle)))
-        #print (self.angle_old)
-        #print (carstate.angle)
-        #print (self.currentAngleCorr)
-        #print ("-----")
+#         #steering_angle_correction = carstate.angle
+# #        self.currentAngleCorr = (carstate.angle/21 + self.currentAngleCorr)/2
+#         if (abs(self.carstate_old.angle) > 0.0):
+#             curr_angle_diff_quotient = abs(self.carstate_old.angle - carstate.angle) / abs(self.carstate_old.angle)
+#         else:
+#             curr_angle_diff_quotient = 0.0
+#
+#         if curr_angle_diff_quotient < 0.01 :
+#             self.target_velocity = 140
+#         else:
+#             if (self.angle_diff_quotient < curr_angle_diff_quotient*0.8 ) :
+#                 self.target_velocity -=20
+#             else:
+#                 self.target_velocity = 140
+#
+#         # if self.target_velocity < 120:
+#         #     print("old angle diff quotient " + str(self.angle_diff_quotient))
+#         #     print("curr angle diff quotient " + str(curr_angle_diff_quotient))
+#         #     print("target velocity " + str(self.target_velocity))
+#         #     print("-----------------------")
+#
+#         self.angle_diff_quotient = curr_angle_diff_quotient
 
-        if ((abs(self.angle_old-carstate.angle) < 10) and (abs(self.angle_old-carstate.angle) > 0.03)):
-            command.steering = (carstate.angle * self.currentAngleCorr)
 
-        self.angle_old = carstate.angle
+        self.currentAngleCorr = 1.0*(carstate.angle / 21) + 0.0*(self.currentAngleCorr)
+
+        # # korrektur wegen zu hohem angle
+        # if (abs(carstate.angle) < 2):
+        #     pass
+        # elif (self.carstate_old.angle < carstate.angle and self.currentAngleCorr < 1):
+        #     self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
+        # elif (self.angle_old > carstate.angle and self.currentAngleCorr > -1):
+        #     self.currentAngleCorr = self.currentAngleCorr - 0.1#*(angle_diff_quat)
+
+
+        # korrektur zum zentrum
+        if (carstate.distance_from_center > 0.1  and self.currentAngleCorr < 1):
+            self.currentAngleCorr -= 0.2
+        elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > -1):
+            self.currentAngleCorr += 0.2
+
+
+        # print (self.carstate_old.angle)
+        # print (carstate.angle)
+        # print (self.currentAngleCorr)
+        # print ("-----------------------")
+
+
+        dist_from_edge_mitte = (carstate.distances_from_edge[7]+
+                                carstate.distances_from_edge[8] +
+                                carstate.distances_from_edge[9] +
+                                carstate.distances_from_edge[10] +
+                                carstate.distances_from_edge[11]) / 5
+
+        #dist_from_edge_mitte = carstate.distances_from_edge[9]
+        print("dist edge mitte" + str(dist_from_edge_mitte))
+        # if (dist_from_edge_mitte < 50):
+        #     self.target_velocity -= 15
+        # elif (dist_from_edge_mitte < 20):
+        #     if (self.prev_dist_from_edge_mitte > dist_from_edge_mitte):
+        #         self.target_velocity -= 25
+        #     else:
+        #         self.target_velocity += 15
+        # elif (dist_from_edge_mitte > 50):
+        #     self.target_velocity = 180
+
+        if (dist_from_edge_mitte < 55):
+            #if leaving turn
+            if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
+                self.target_velocity += 15
+            else:
+                self.target_velocity -= 25
+        elif dist_from_edge_mitte >= 55:
+            self.target_velocity = 190
+
+        if self.target_velocity < 60:
+            self.target_velocity = 60;
+
+        self.prev_dist_from_edge_mitte = dist_from_edge_mitte
+
+        # if abs(self.currentAngleCorr) > 0.06:
+        #     self.target_velocity -= 25
+        #
+        #     if self.target_velocity < 40:
+        #         self.target_velocity = 40;
+        # else:
+        #     self.target_velocity = 120
+        #
+        # print(self.target_velocity)
+        # print(self.currentAngleCorr)
+
+        # command.steering = (carstate.angle*self.currentAngleCorr);
+        command.steering = self.currentAngleCorr
 
     def select_acceleration(self, carstate: State, command: Command):
+        # if carstate.speed_x < 80 * MPS_PER_KMH:
+        #     self.accelerator += 0.1
+        # else:
+        #     self.accelerator = 0
 
-        acceleration_const = 1.0
-        _logger.info('distance_from_start: {}'.format(carstate.distance_from_start))
-
-        if carstate.distance_from_start > 0 and carstate.distance_from_start < 350:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 350 and carstate.distance_from_start < 380 and carstate.speed_x > 80 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 480 and carstate.distance_from_start < 700:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 700 and carstate.distance_from_start < 750 and carstate.speed_x > 80 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 750 and carstate.distance_from_start < 950:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 950 and carstate.distance_from_start < 980 and carstate.speed_x > 80 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 980 and carstate.distance_from_start < 1400:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 100 * MPS_PER_KMH: #80
-            command.accelerator = 0
-            command.brake = 0.5
-        elif carstate.distance_from_start > 1580 and carstate.distance_from_start < 1850:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 1850 and carstate.distance_from_start < 1950 and carstate.speed_x > 90 * MPS_PER_KMH: #60
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 1950 and carstate.distance_from_start < 2300:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 2300 and carstate.distance_from_start < 2400 and carstate.speed_x > 60 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 2550 and carstate.distance_from_start < 2650:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 2650 and carstate.distance_from_start < 2700 and carstate.speed_x > 60 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 2750 and carstate.distance_from_start < 2900:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 2900 and carstate.distance_from_start < 2950 and carstate.speed_x > 80 * MPS_PER_KMH: #60
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 3020 and carstate.distance_from_start < 3100:
-            command.accelerator = acceleration_const
-            command.brake = 0
-        elif carstate.distance_from_start > 3200 and carstate.distance_from_start < 3300 and carstate.speed_x > 60 * MPS_PER_KMH:
-            command.accelerator = 0
-            command.brake = 1
-        elif carstate.distance_from_start > 3300 and carstate.distance_from_start < 4000: #3400-3600
-            command.accelerator = acceleration_const
-            command.brake = 0
+        if carstate.speed_x < self.target_velocity * MPS_PER_KMH:
+            self.accelerator += 0.1
         else:
-            command.brake = 0
+            self.accelerator = 0
 
-            if carstate.speed_x < 70 * MPS_PER_KMH:
-                self.accelerator += 0.1
-            else:
-                self.accelerator = 0
-            self.accelerator = min(1, self.accelerator)
-            self.accelerator = max(-1, self.accelerator)
-            command.accelerator = self.accelerator
-       # _logger.info('accelerator: {}'.format(command.accelerator))
+        if self.target_velocity * MPS_PER_KMH < carstate.speed_x:
+            if (carstate.speed_x - self.target_velocity * MPS_PER_KMH ) > 20:
+                if self.breaking > 0.0:
+                    self.breaking += 0.1
+                else:
+                    self.breaking = 0.6
+        else:
+            self.breaking = 0.0
+
+        self.accelerator = min(1, self.accelerator)
+        self.accelerator = max(-1, self.accelerator)
+
+        self.breaking = min(1, self.breaking)
+
+        command.accelerator = self.accelerator
+        command.brake = self.breaking
+
+        #if (command.brake > 0.0):
+        _logger.info('accelerator: {}'.format(command.accelerator))
+        _logger.info('break: {}'.format(self.breaking))
+        # _logger.info('target velocity: {}'.format(self.target_velocity))
+        # _logger.info('current speed: {}'.format(carstate.speed_x))
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
@@ -163,6 +203,10 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        if (self.carstate_old == None):
+            self.carstate_old = carstate
+            self.carstate_old.angle = 0.0
+
         command = Command()
 
         # steering control:
@@ -177,5 +221,7 @@ class Driver:
             self.data_logger.log(carstate, command)
 
         self.angle_old = carstate.angle
+
+        self.carstate_old = carstate
 
         return command
