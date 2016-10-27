@@ -59,7 +59,7 @@ class Lane:
                 max_idx = i
 
         if max_dist>150:
-            self.vel = max_dist * 300 / 200
+            self.vel = max_dist * 250 / 200
         elif max_dist > 90:
             self.vel = max_dist
         elif max_dist > 50:
