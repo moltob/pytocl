@@ -59,18 +59,19 @@ class Driver:
         # basic acceleration to target speed:
         targetAcceleration = self.accelerator.update(carstate)
         if targetAcceleration < 0:
-            command.brake = -targetAcceleration
+            command.brake = -targetAcceleration * 0.5
             command.accelerator = 0.0
         else:
             command.accelerator = targetAcceleration
             command.brake = 0.0
 
-        _logger.info('accelerator: {}'.format(command.accelerator))
-        _logger.info('brake: {}'.format(command.brake))
-        _logger.info('current velocity: {}'.format(carstate.speed_x))
+        #_logger.info('accelerator: {}'.format(command.accelerator))
+        #_logger.info('brake: {}'.format(command.brake))
+        #_logger.info('current velocity: {}'.format(carstate.speed_x))
+        _logger.info('distance_from_start: {}'.format(carstate.distance_from_start))
 
         # gear shifting:
-        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
+        #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 7000 and carstate.gear < 6:
             _logger.info('switching up')
