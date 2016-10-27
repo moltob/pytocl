@@ -10,3 +10,6 @@ class Plan:
 
     def get_desired_angle(self):
         return 0
+
+    def get_desired_focus(self):
+        return 0

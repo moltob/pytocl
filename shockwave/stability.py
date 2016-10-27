@@ -11,14 +11,16 @@ class Stability:
         self.accelerator = Accelerator(self.plan)
         self.gearer = Gearer(self.plan)
 
-    def get_command(self, carstate: State) -> Command:
+    def get_command(self, state: State) -> Command:
         command = Command()
         command.steering = 0
-        command.accelerator = 0
+
+        ac = self.accelerator.get_acceleration(state)
+        command.accelerator = ac if ac > 0 else 0
+        command.brake = -ac if ac < 0 else 0
+
         command.gear = 0
-        command.brake = 0
         command.focus = 0
         return command
-
 
 
