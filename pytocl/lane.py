@@ -3,10 +3,12 @@ from pytocl.analysis import DataLogWriter
 angles = [-90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90]
 
 class Lane:
-
+    last_ang = -1
+    
     def __init__ (self):
         self.vel = 0
         self.ang = -1
+        
         self.data_logger = DataLogWriter()
 
 
@@ -19,6 +21,28 @@ class Lane:
         returned in ``state.State.tracks``.
         """
         return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+
+    def new_ang(self, angle):
+        print (Lane.last_ang)
+        print(angle)
+        diff = 0
+        new_angle = angle
+        if angle >= 0 and Lane.last_ang>=0:
+            return angle
+        if angle<=0 and Lane.last_ang<=0:
+            return angle
+
+        diff = angle - Lane.last_ang
+
+        if abs(diff) >= 10:
+            if diff >= 0:
+                new_angle= Lane.last_ang+10
+            else:
+                new_angle = Lane.last_ang - 10
+            print (str(diff) + "   *****************************************************************")
+        else:
+            new_angle=angle
+        return new_angle
 
     def lookfwd(self, carstate):
         max_dist = 0
@@ -34,15 +58,28 @@ class Lane:
                 max_dist = carstate.distances_from_edge[i]
                 max_idx = i
 
-        if (max_dist<80):
+        if max_dist>150:
+            self.vel = max_dist * 300 / 200
+        elif max_dist > 90:
+            self.vel = max_dist
+        elif max_dist > 50:
             self.vel = max_dist * 0.6
-        else: self.vel = max_dist
-        if carstate.distance_from_start >2440 and carstate.distance_from_start <2550:
-            self.vel=10
+        else:
+            self.vel = max_dist * 0.4
+
+
+
+            #print (carstate.distances_from_edge)
+            #self.vel=10
+
+        #print(carstate.distances_from_edge)
+        #self.ang = self.new_ang(angles[max_idx])
         self.ang = angles[max_idx]
+        #Lane.last_ang = self.ang
+        if carstate.distance_from_start >2400 and carstate.distance_from_start <2600:
+            print(' #############   Winkel ' +  str(self.ang) + '####################')
 
-
-        print('velocity, angle : {}, {}, {}'.format(self.vel, self.ang, carstate.distance_from_start))
+        print('velocity, angle : {}, {}, {}, {}'.format(max_dist, self.vel, self.ang, carstate.distance_from_start))
      #   print('distance_from_edge: {}'.format(carstate.distances_from_edge))
 
     def velocity(self):
