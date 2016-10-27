@@ -21,8 +21,8 @@ class Driver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.brake = 0.0
-        self.pid_angle = PID(8, 0.01, 1.2)
-        self.pid_dist = PID(1.5, 0.02, 0.2)
+        self.pid_angle = PID(9, 0.05, 0)
+        self.pid_dist = PID(0.5, 0.02, 0)
         self.pid_speed = PID(20, 0, 0)
         self.speedlist = SpeedList()
         self.createCorkScrewSpeedlist()
