@@ -103,14 +103,13 @@ class Driver:
         if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD * (current_velocity_kmh / 150)):
             # if leaving turn
             if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
-                self.target_velocity += 15
-
+                    self.target_velocity += 15
             else:
                 if (self.brake_begin_consumed == False) :
                     self.target_velocity = current_velocity_kmh - 20
                     self.brake_begin_consumed = True
                 else:
-                    self.target_velocity -= 20
+                    self.target_velocity -= 10
 
         elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
             self.brake_begin_consumed = False
@@ -143,7 +142,7 @@ class Driver:
                     if (carstate.speed_x*KMH_PER_MPS > 150):
                         self.breaking = 0.35
                     else:
-                        self.breaking = 0.2
+                        self.breaking = 0.20
         else:
             self.breaking = 0.0
 
