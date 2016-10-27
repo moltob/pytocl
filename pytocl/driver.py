@@ -71,7 +71,8 @@ class Driver:
         return self.drive_dani1(carstate)
 
     def __init__(self, logdata=True):
-        self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+        #self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+        self.directions = -90, -60, -40, -25, -20, -15, -10, -5, -2, 0, 2, 5, 10, 15, 20, 25, 40, 60, 90
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.dt = 0.020
@@ -145,8 +146,8 @@ class Driver:
         speedKi = 0.0
 
         #angleKp = 0.07
-        angleKp = 0.03
-        angleKd = 0.01
+        angleKp = 0.025
+        angleKd = 0.01 #0.02
         angleKi = 0.0
 
 
@@ -156,7 +157,10 @@ class Driver:
 
         #Track planing:
         maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
-        angleAheadFree = - self.directions[maxDistanceIndex]
+        if(maxDistance != -1):
+            angleAheadFree = - self.directions[maxDistanceIndex]
+        else:
+            angleAheadFree = carstate.angle
         printMaxDistanceAhead = 1
         if (printMaxDistanceAhead):
             if(maxDistance != -1):
