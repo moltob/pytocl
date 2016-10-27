@@ -14,6 +14,7 @@ class Stability:
         self.gearer = Gearer(self.plan)
 
     def get_command(self, state: State) -> Command:
+        self.plan.state = state
         command = Command()
         command.steering = self.steerer.get_steering_angle(state)
 
@@ -24,8 +25,7 @@ class Stability:
         command.gear = self.gearer.get_gear(state)
         command.focus = 0
 
-        _logger.info("Steering %f", command.steering)
-        _logger.info("Accelerate %f", ac)
+        _logger.info("Distance %d", state.distance_from_start)
 
         return command
 

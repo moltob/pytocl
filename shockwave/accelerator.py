@@ -8,7 +8,7 @@ class Accelerator:
 
     def __init__(self, plan):
         self.plan = plan
-        self.pid = AcceleratorPID(0.5, 0, 0)
+        self.pid = AcceleratorPID(0.5, 0, 0.001)
 
     def get_acceleration(self, state: State):
         desired_speed = self.plan.get_desired_speed()
@@ -35,5 +35,6 @@ class AcceleratorPID:
 
         self.last_e = e
         out = -self.kp*e - self.kd*de - self.ki*ie
+
 
         return out
