@@ -90,17 +90,17 @@ class Driver:
         c3 = Curve(970, 1100, 140)
         self.curves.append(c3)
 
-        c4 = Curve(1430, 1550, 100)
+        c4 = Curve(1430, 1550, 120)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 90)
+        c5 = Curve(1880, 1940, 110)
         self.curves.append(c5)
 
         c6pre = Curve(2300, 2350, 150)
-        #self.curves.append(c6pre)
+        self.curves.append(c6pre)
 
         c6pre2 = Curve(2350, 2400, 120)
-        #self.curves.append(c6pre2)
+        self.curves.append(c6pre2)
 
         c6 = Curve(2350, 2500, 60)
         self.curves.append(c6)
@@ -182,7 +182,7 @@ class Driver:
 
         if(command.brake > 0.0 and min_wheel_speed < 3000):
             print('!!!!!!! ABS')
-            command.brake = 0.0
+            #command.brake = 0.0
 
         if(command.steering > 1):
             command.steering = 1
