@@ -1,5 +1,4 @@
 from pytocl.car import State
-from shockwave.plan import Plan
 
 
 class Accelerator:
@@ -9,20 +8,32 @@ class Accelerator:
 
     def __init__(self, plan):
         self.plan = plan
+        self.pid = AcceleratorPID(0.5, 0, 0)
 
-    def get_acceleration(self, state: State, plan: Plan):
-
-        acceleration = 0.0
-
-        if state.angle < abs(self.FULL_ACC_ANGLE):
-            acceleration = 1.0
-        elif state.angle > abs(self.FULL_BREAK_ANGLE):
-            acceleration = -1.0
-
-        # Make sure, acceleration is within bounds -1, 1
-        if (acceleration < 0):
-            acceleration = max(-1, acceleration)
-        else:
-            acceleration = min(1, acceleration)
-
+    def get_acceleration(self, state: State):
+        desired_speed = self.plan.get_desired_speed()
+        acceleration = self.pid.get_acceleration(state.speed_x - desired_speed)
         return acceleration
+
+
+class AcceleratorPID:
+    def __init__(self, kp, kd, ki):
+        self.kp, self.kd, self.ki = kp, kd, ki
+        self.last_e = None
+        self.last_es = []
+
+    def get_acceleration(self, e):
+        if self.last_e is None:
+            self.last_e = e
+
+        self.last_es.append(e)
+        if len(self.last_es) > 20:
+            self.last_es.pop(0)
+
+        de = e - self.last_e
+        ie = sum(self.last_es)
+
+        self.last_e = e
+        out = -self.kp*e - self.kd*de - self.ki*ie
+
+        return out

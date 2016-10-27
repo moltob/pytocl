@@ -6,7 +6,7 @@ class Plan:
         return 0
 
     def get_desired_speed(self):
-        return 30
+        return 15
 
     def get_desired_angle(self):
         return 0
