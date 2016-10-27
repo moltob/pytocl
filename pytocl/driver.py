@@ -35,8 +35,9 @@ class Curve:
     def endPoint(self):
         return self.ep
 
-    def speed(self):
+    def speedKmh(self):
         return self.spe
+
 
 class Driver:
     """Driving logic.
@@ -54,7 +55,7 @@ class Driver:
         During regular execution, a 19-valued vector of track distances in these directions is
         returned in ``state.State.tracks``.
         """
-        return self.directions
+        return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -65,11 +66,6 @@ class Driver:
         if self.data_logger:
             self.data_logger.close()
             self.data_logger = None
-
-    def direction_with_biggest_distance(self, distances):
-        index = distances.index(max(distances))
-        return self.directions[index]
-
 
     def drive(self, carstate: State) -> Command:
         return self.drive_dani1(carstate)
@@ -83,23 +79,31 @@ class Driver:
         self.pidAngle = Pid()
         self.pidDistCenter = Pid()
 
+        self.lap = 0
+        self.lastCurve = -1
         self.timeMsec = 0
         self.curves = list()
         self.speedSetPoint = 0.0
 
-        c1 = Curve(350, 500, 80)
-        self.curves.append(c1)
+        c0 = Curve(100, 150, 150)
+        self.curves.append(c0)
 
-        c2 = Curve(700, 750, 90)
+        c1_a = Curve(350, 400, 80)
+        self.curves.append(c1_a)
+
+        c1_b = Curve(450, 500, 80)
+        self.curves.append(c1_b)
+
+        c2 = Curve(700, 750, 100)
         self.curves.append(c2)
 
-        c3 = Curve(970, 1100, 140)
+        c3 = Curve(970, 1000, 150)
         self.curves.append(c3)
 
-        c4 = Curve(1430, 1550, 100)
+        c4 = Curve(1450, 1500, 145)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 90)
+        c5 = Curve(1880, 1940, 110)
         self.curves.append(c5)
 
         c6pre = Curve(2300, 2350, 150)
@@ -108,13 +112,13 @@ class Driver:
         c6pre2 = Curve(2350, 2400, 120)
         self.curves.append(c6pre2)
 
-        c6 = Curve(2400, 2500, 60)
+        c6 = Curve(2400, 2500, 70)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2700, 120)
+        c7 = Curve(2600, 2650, 120)
         self.curves.append(c7)
 
-        c8 = Curve(2900, 3000, 130)
+        c8 = Curve(2900, 2950, 140)
         self.curves.append(c8)
 
         c9 = Curve(3200, 3285, 70)
@@ -131,12 +135,6 @@ class Driver:
         """
         command = Command()
 
-        self.timeMsec = self.timeMsec + 20
-        printDistance = False
-        if(self.timeMsec % 1000 == 0):
-            printDistance = True
-
-        # dummy steering control:
         #distCenterKp = 10.0
         distCenterKp = 0
         distCenterKd = 0
@@ -152,24 +150,9 @@ class Driver:
         angleKi = 0.0
 
 
-        trackPos = carstate.distance_from_center
-        speed = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
-
-        trackPos_SetPoint = 0.0
-        speed_SetPoint = 100.0 * MPS_PER_KMH
-        angle_SetPoint = 0.0
-
-        trackPos_Diff = trackPos_SetPoint - trackPos
-
-        trackPos_Diff_Module = math.sqrt(trackPos_Diff**2)
-
+        distFromCenter = carstate.distance_from_center
+        speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
         trackDistance = carstate.distance_from_start
-
-        #print('')
-        #print('TRACK DISTANCE='+ str(trackDistance))
-        #print('TRACK DISTANCE='+ str(trackDistance))
-        #print('TRACK DISTANCE='+ str(trackDistance))
-        #print('')
 
         #Track planing:
         maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
@@ -179,38 +162,38 @@ class Driver:
             if(maxDistance != -1):
                 print('maxDistance' + str(maxDistance) + '\t angle: ' + str(self.directions[maxDistanceIndex]))
 
+        self.timeMsec = self.timeMsec + 20
+        printDistance = False
+        if(self.timeMsec % 1000 == 0):
+            printDistance = True
 
-        MAX_SPEED = 240.0
+        if(printDistance):
+            print("DISTANCE = " + str(trackDistance))
 
-        speed_SetPoint = MAX_SPEED
+        trackPos_SetPoint = 0.0
+        angle_SetPoint = 0.0
+
+        speed_SetPoint_kmh = 240.0
+        curve = -1
         for c in self.curves:
+            curve = curve + 1
             start = c.startPoint()
             end = c.endPoint()
             if (trackDistance > start and trackDistance < end):
-                speed_SetPoint = c.speed()
-                if(self.speedSetPoint != speed_SetPoint):
-                    aaaa = 3
-                    #print('')
-                    #print('TRACK DISTANCE=' + str(trackDistance) + ', SPEED SET POINT=' + str(speed_SetPoint))
-                    #print('TRACK DISTANCE=' + str(trackDistance) + ', SPEED SET POINT=' + str(speed_SetPoint))
-                    #print('TRACK DISTANCE=' + str(trackDistance) + ', SPEED SET POINT=' + str(speed_SetPoint))
-                    #print('')
-                break
+                speed_SetPoint_kmh = c.speedKmh()
 
-        #speed_SetPoint = 80.0
-        speed_SetPoint = speed_SetPoint * MPS_PER_KMH
-        self.speedSetPoint = speed_SetPoint
-        cmdDistCenter = self.pidDistCenter.calc(trackPos_SetPoint, trackPos, self.dt, distCenterKp, distCenterKd, distCenterKi)
-        #cmdAngle = self.pidAngle.calc(angle_SetPoint, carstate.angle, self.dt, angleKp, angleKd, angleKi)
+        if(curve != self.lastCurve):
+            if(curve == 0):
+                self.lap = self.lap + 1
+
+        if(curve == 0 and self.lap == 1):
+            speed_SetPoint_kmh = 240.0
+
+        speed_SetPoint_ms = speed_SetPoint_kmh * MPS_PER_KMH
+        self.speedSetPoint = speed_SetPoint_ms
+        cmdDistCenter = self.pidDistCenter.calc(trackPos_SetPoint, distFromCenter, self.dt, distCenterKp, distCenterKd, distCenterKi)
         cmdAngle = self.pidAngle.calc(angle_SetPoint, angleAheadFree, self.dt, angleKp, angleKd, angleKi)
-        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint, speed, self.dt, speedKp, speedKd, speedKi)
-
-        if(printDistance):
-            abs = False
-            for wheel_speed in carstate.wheel_velocities:
-                print('WHEEL SPEED = ' + str(wheel_speed))
-                print('SPEED = ' + str(speed))
-
+        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, speedKp, speedKd, speedKi)
 
         command.steering = -cmdAngle  + cmdDistCenter
         command.accelerator = 0.0
@@ -219,6 +202,17 @@ class Driver:
             command.accelerator = cmdAccelerator
         else:
             command.brake = -cmdAccelerator
+
+        min_wheel_speed = 999999999
+        min_wheel_speed = min(carstate.wheel_velocities)
+        #print('WHEEL_SPEED=' + str(min_wheel_speed))
+
+        if(command.brake > 0.0 and min_wheel_speed < 1000):
+            print('!!!!!!! ABS')
+            #command.brake = 0.0
+
+        if(command.brake == 0.0 and command.accelerator > 0.0 and command.accelerator < 1.0):
+            command.accelerator = 1.0
 
         if(command.steering > 1):
             command.steering = 1
@@ -239,5 +233,8 @@ class Driver:
         ##if self.data_logger:
          ##   self.data_logger.log(carstate, command)
 
+        ##if(True == printDistance):
+        ##   _logger.info(carstate.distance_from_start)
+        ##    print(carstate.distance_from_start)
 
         return command
