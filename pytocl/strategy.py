@@ -32,15 +32,21 @@ class StrategyController:
 
     def detect_curve(self, carstate: State):
         m = carstate.distances_from_edge
-        if carstate.distances_from_egde_valid and m[9] < 150:
+        cshape = m[8] - m[10]
+        if cshape > 10:
+            cshape = 10
+        cshape /= 10
+        if carstate.distances_from_egde_valid and m[9] < 50:
             if m[8] < m[9] < m[10]:
-                return Curve.RIGHT
+                print(cshape)
+                return cshape
             elif m[8] > m[9] > m[10]:
-                return Curve.LEFT
+                print(cshape)
+                return -1 * cshape
             else:
-                return Curve.NONE
+                return 0
         else:
-            return Curve.NONE
+            return 0
 
     def emergency_break(self, carstate: State):
         m = carstate.distances_from_edge
