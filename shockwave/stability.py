@@ -6,6 +6,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+
 class Stability:
     def __init__(self, plan):
         self.plan = plan
@@ -24,9 +25,6 @@ class Stability:
 
         command.gear = self.gearer.get_gear(state)
         command.focus = 0
-
-        if state.distance_from_start % 50 == 0:
-            _logger.info("Distance %d", state.distance_from_start)
 
         return command
 
