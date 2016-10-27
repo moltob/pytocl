@@ -1,8 +1,6 @@
 from pytocl.pid import PID
 from pytocl.car import State
-import logging
 
-_logger = logging.getLogger(__name__)
 
 class Steering:
     CENTER = 0
