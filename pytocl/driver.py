@@ -45,6 +45,12 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
+    def __init__(self, logdata=True):
+        self.data_logger = DataLogWriter() if logdata else None
+        self.accelerator = 0.0
+
+        self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+
     @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
@@ -53,7 +59,7 @@ class Driver:
         During regular execution, a 19-valued vector of track distances in these directions is
         returned in ``state.State.tracks``.
         """
-        return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+        return self.directions
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -64,6 +70,11 @@ class Driver:
         if self.data_logger:
             self.data_logger.close()
             self.data_logger = None
+
+    def direction_with_biggest_distance(self, distances):
+        index = distances.index(max(distances))
+        return self.directions[index]
+
 
     def drive(self, carstate: State) -> Command:
         return self.drive_dani1(carstate)
