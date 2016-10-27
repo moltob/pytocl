@@ -19,7 +19,7 @@ class Driver:
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
+        self.accelerator = Acceleration()
         self.steeringControl = Steering()
 
     @property
