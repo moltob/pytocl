@@ -58,7 +58,7 @@ class Driver:
         #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
         if ((abs(self.angle_old-carstate.angle) < 10)):
-            pass
+            self.currentAngleCorr = 0.3
         elif (self.angle_old < carstate.angle and self.currentAngleCorr < 0.9):
             self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
         elif (self.angle_old > carstate.angle and self.currentAngleCorr > 0.3):
@@ -79,7 +79,8 @@ class Driver:
 
         self.angle_old = carstate.angle
 
-        command.steering = (carstate.angle * self.currentAngleCorr)
+        if ((abs(self.angle_old-carstate.angle) < 10)):
+            command.steering = (carstate.angle * self.currentAngleCorr)
 
     def select_acceleration(self, carstate: State, command: Command):
 
@@ -89,13 +90,13 @@ class Driver:
         if carstate.distance_from_start > 0 and carstate.distance_from_start < 350:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 350 and carstate.distance_from_start < 380 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 350 and carstate.distance_from_start < 380 and carstate.speed_x > 80 * MPS_PER_KMH:
             command.accelerator = 0
             command.brake = 1
         elif carstate.distance_from_start > 480 and carstate.distance_from_start < 700:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 700 and carstate.distance_from_start < 750 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 700 and carstate.distance_from_start < 750 and carstate.speed_x > 80 * MPS_PER_KMH:
             command.accelerator = 0
             command.brake = 1
         elif carstate.distance_from_start > 800 and carstate.distance_from_start < 950:
@@ -104,9 +105,9 @@ class Driver:
         elif carstate.distance_from_start > 1100 and carstate.distance_from_start < 1400:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 80 * MPS_PER_KMH:
             command.accelerator = 0
-            command.brake = 1
+            command.brake = 0.5
         elif carstate.distance_from_start > 1580 and carstate.distance_from_start < 1850:
             command.accelerator = acceleration_const
             command.brake = 0
@@ -125,13 +126,25 @@ class Driver:
         elif carstate.distance_from_start > 2650 and carstate.distance_from_start < 2700 and carstate.speed_x > 60 * MPS_PER_KMH:
             command.accelerator = 0
             command.brake = 1
-        elif carstate.distance_from_start > 3050 and carstate.distance_from_start < 3400:
+        elif carstate.distance_from_start > 2750 and carstate.distance_from_start < 2900:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 2900 and carstate.distance_from_start < 2950 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 3020 and carstate.distance_from_start < 3100:
+            command.accelerator = acceleration_const
+            command.brake = 0
+        elif carstate.distance_from_start > 3150 and carstate.distance_from_start < 3350 and carstate.speed_x > 60 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 3400 and carstate.distance_from_start < 3600:
             command.accelerator = acceleration_const
             command.brake = 0
         else:
             command.brake = 0
 
-            if carstate.speed_x < 60 * MPS_PER_KMH:
+            if carstate.speed_x < 70 * MPS_PER_KMH:
                 self.accelerator += 0.1
             else:
                 self.accelerator = 0
