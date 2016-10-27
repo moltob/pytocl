@@ -14,7 +14,7 @@ class Driver:
     creating car control commands as a response. The ``drive`` function is called periodically
     every 20ms and must return a command within 10ms wall time.
     """
-    #dynamic = Dynamic()
+    dynamic = Dynamic()
     #mylane = lane()
 
     def __init__(self, logdata=True):
@@ -49,11 +49,11 @@ class Driver:
         track.
         """
         command = Command()
-
-        command.steering = dynamic.speed
-        command.accelerator = dynamic.acceleration
-        command.brake = dynamic.brake
-        command.gear = dynamic.gear
+        self.dynamic.simple(carstate)
+        command.steering = self.dynamic.speed
+        command.accelerator = self.dynamic.accelerator
+        command.brake = self.dynamic.brake
+        command.gear = self.dynamic.gear
 
         if self.data_logger:
             self.data_logger.log(carstate, command)

@@ -6,7 +6,7 @@ class Dynamic:
         self.speed = 0
 
         # out
-        self.acceleration = 0
+        self.accelerator = 0
         self.gear = 0
         self.brake = 0
         self.steering = 0
@@ -28,10 +28,11 @@ class Dynamic:
 
          # gear shifting:
          #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
-         gear = carstate.gear or 1
+
+         self.gear = carstate.gear or 1
          if carstate.rpm > 7000 and carstate.gear < 6:
             # _logger.info('switching up')
-             gear = carstate.gear + 1
+             self.gear = carstate.gear + 1
          elif carstate.rpm < 2000 and carstate.gear > 1:
              #_logger.info('switching down')
-             gear = carstate.gear - 1
+             self.gear = carstate.gear - 1
