@@ -2,3 +2,5 @@
 test/.cache
 __pycache__/
 drivelogs/
+*.pyc
+*.pdf

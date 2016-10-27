@@ -2,6 +2,7 @@ import logging
 
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.pid import PID
 
 _logger = logging.getLogger(__name__)
 
@@ -17,6 +18,9 @@ class Driver:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
+        self.pid_angle = PID(2.5, 0.01, 0.7)
+        self.pid_dist = PID(2.5, 0.01, 0.7)
+        self.pid_speed = PID(2.5, 0.01, 0.7)
 
     @property
     def range_finder_angles(self):
@@ -48,10 +52,15 @@ class Driver:
         command = Command()
 
         # dummy steering control:
-        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+        steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
+        steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, 0)
+
+
+
+        command.steering = (4*steering_stellgr_angle + steering_stellgr_dist) / 5
 
         # basic acceleration to target speed:
-        if carstate.speed_x < 50 * MPS_PER_KMH:
+        if carstate.speed_x < 40 * MPS_PER_KMH:
             self.accelerator += 0.1
         else:
             self.accelerator = 0
@@ -72,5 +81,9 @@ class Driver:
 
         if self.data_logger:
             self.data_logger.log(carstate, command)
+
+        self.last_steering = command.steering
+
+        _logger.info("Distance: " + str(carstate.distance_from_start))
 
         return command
