@@ -11,12 +11,12 @@ class Acceleration:
         self.control = PID(0.5, 0.1, 0.2, Integrator_max=20, Integrator_min=-20)
         self.targetVelocity = 21.6
         self.targetTrackVelocity = [
-            TrackParameter(400, 15), TrackParameter(400+100, 30),
-            TrackParameter(2400, 15), TrackParameter(2500, 30),
-            TrackParameter(3200, 15), TrackParameter(3300, 30)]
+            TrackParameter(350, 15), TrackParameter(400+100, 30),
+            TrackParameter(2350, 15), TrackParameter(2500, 35),
+            TrackParameter(3200, 15), TrackParameter(3300, 60)]
 
     def setTargetVelocity(self, carstate):
-        self.targetVelocity = 30
+        self.targetVelocity = 40
         position = carstate.distance_from_start
         for track in self.targetTrackVelocity:
             if position >= track.start:
