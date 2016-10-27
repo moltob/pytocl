@@ -55,10 +55,10 @@ class Driver:
         # gear shifting:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
-        if carstate.rpm > 8500 and carstate.gear < 6:
+        if carstate.rpm > 9500 and carstate.gear < 6:
             #_logger.info('switching up')
             command.gear = carstate.gear + 1
-        elif carstate.rpm < 2000 and carstate.gear > 1:
+        elif carstate.rpm < 4000 and carstate.gear > 1:
             #_logger.info('switching down')
             command.gear = carstate.gear - 1
 
@@ -80,9 +80,9 @@ class Driver:
         if (dist_centre > dist_left and dist_centre > dist_right):
             self.currentAngleCorr += 0.0
         elif (dist_left > dist_right):
-            self.currentAngleCorr += 0.2
+            self.currentAngleCorr += 0.22
         else:
-            self.currentAngleCorr -= 0.2
+            self.currentAngleCorr -= 0.22
 
         command.steering = self.currentAngleCorr
 
