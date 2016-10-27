@@ -24,11 +24,12 @@ class StrategyController:
         return self.speed, self.target_pos
 
     def control_speed(self, carstate: State):
-        curve = self.detect_curve(carstate)
-        if curve is Curve.NONE:
+        cshape = self.detect_curve(carstate)
+        _logger.info('StrategyController: {}'.format(cshape))
+        if cshape == 0:
             return 400
         else:
-            return 60
+            return 200 * abs(cshape)
 
     def detect_curve(self, carstate: State):
         m = carstate.distances_from_edge
@@ -36,7 +37,7 @@ class StrategyController:
         if cshape > 100:
             cshape = 100
         cshape /= 100
-        if carstate.distances_from_egde_valid and m[9] < 50:
+        if carstate.distances_from_egde_valid and m[9] < 100:
             if m[8] < m[9] < m[10]:
                 print(cshape)
                 return 1 - cshape

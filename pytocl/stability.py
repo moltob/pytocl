@@ -31,13 +31,13 @@ class GearboxController:
         # gear shifting:
         self.gear_control = gear or 1
         if rpm > 8000 and gear < 6:
-            _logger.info('switching up')
+            #_logger.info('switching up')
             self.gear_control = gear + 1
         elif rpm < 3000 and gear > 1:
-            _logger.info('switching down')
+            #_logger.info('switching down')
             self.gear_control = gear - 1
 
-        _logger.info('GearboxController: rpm, gear, gear_control: {}, {}, {}'.format(rpm, gear, self.gear_control))
+        #_logger.info('GearboxController: rpm, gear, gear_control: {}, {}, {}'.format(rpm, gear, self.gear_control))
         return self.gear_control
 
 
@@ -48,8 +48,8 @@ class SteeringController:
     def control(self, target_pos, angle, distance_from_center):
         distance_from_target_pos = target_pos - distance_from_center
         steering = (angle / 21) + distance_from_target_pos * 0.5
-        _logger.info('SteeringController: target_pos, angle, distance_from_center, steering: {}, {}, {}, {}'.
-                     format(target_pos, angle, distance_from_center, steering))
+        #_logger.info('SteeringController: target_pos, angle, distance_from_center, steering: {}, {}, {}, {}'.
+        #             format(target_pos, angle, distance_from_center, steering))
 
         return steering
 
@@ -71,6 +71,6 @@ class VelocityController:
 
         self.accelerator = min(1, self.accelerator)
         self.accelerator = max(-1, self.accelerator)
-        _logger.info('VelocityController: speed_x, accelerator: {}, {}'.
-                     format(target_speed_x, self.accelerator))
+        #_logger.info('VelocityController: speed_x, accelerator: {}, {}'.
+        #             format(target_speed_x, self.accelerator))
         return self.accelerator, self.brake
