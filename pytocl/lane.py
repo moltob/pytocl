@@ -5,8 +5,8 @@ angles = [-90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 
 class Lane:
 
     def __init__ (self):
-        self.velocity = 0
-        self.angle = -1
+        self.vel = 0
+        self.ang = -1
         self.data_logger = DataLogWriter()
 
 
@@ -28,18 +28,18 @@ class Lane:
                 max_dist = carstate.distances_from_edge[i]
                 max_idx = i
 
-        self.velocity = max_dist * 0,75
-        self.angle = angles[max_idx]
+        self.vel = max_dist * 0,75
+        self.ang = angles[max_idx]
 
 
-        print('max : {}, {}'.format(max_idx, max_dist))
-        print('distance_from_edge: {}'.format(carstate.distances_from_edge))
+        print('velocity, angle : {}, {}'.format(self.vel, self.ang))
+     #   print('distance_from_edge: {}'.format(carstate.distances_from_edge))
 
     def velocity(self):
-        return self.velocity
+        return self.vel
 
     def angle(self):
-        return self.angle
+        return self.ang
 
 
 #_logger.info('distance_from_center: {}'.format(carstate.distance_from_center))
