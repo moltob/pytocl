@@ -71,11 +71,11 @@ class Driver:
         elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > 0.3):
             self.currentAngleCorr -= 0.1
 
-        print ((abs(self.angle_old - carstate.angle)))
-        print (self.angle_old)
-        print (carstate.angle)
-        print (self.currentAngleCorr)
-        print ("-----")
+        #print ((abs(self.angle_old - carstate.angle)))
+        #print (self.angle_old)
+        #print (carstate.angle)
+        #print (self.currentAngleCorr)
+        #print ("-----")
 
         if ((abs(self.angle_old-carstate.angle) < 10) and (abs(self.angle_old-carstate.angle) > 0.03)):
             command.steering = (carstate.angle * self.currentAngleCorr)
@@ -84,7 +84,7 @@ class Driver:
 
     def select_acceleration(self, carstate: State, command: Command):
 
-        acceleration_const = 0.8
+        acceleration_const = 1.0
         _logger.info('distance_from_start: {}'.format(carstate.distance_from_start))
 
         if carstate.distance_from_start > 0 and carstate.distance_from_start < 350:
@@ -99,19 +99,22 @@ class Driver:
         elif carstate.distance_from_start > 700 and carstate.distance_from_start < 750 and carstate.speed_x > 80 * MPS_PER_KMH:
             command.accelerator = 0
             command.brake = 1
-        elif carstate.distance_from_start > 800 and carstate.distance_from_start < 950:
+        elif carstate.distance_from_start > 750 and carstate.distance_from_start < 950:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 1100 and carstate.distance_from_start < 1400:
+        elif carstate.distance_from_start > 950 and carstate.distance_from_start < 980 and carstate.speed_x > 80 * MPS_PER_KMH:
+            command.accelerator = 0
+            command.brake = 1
+        elif carstate.distance_from_start > 980 and carstate.distance_from_start < 1400:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 80 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 1450 and carstate.distance_from_start < 1500 and carstate.speed_x > 100 * MPS_PER_KMH: #80
             command.accelerator = 0
             command.brake = 0.5
         elif carstate.distance_from_start > 1580 and carstate.distance_from_start < 1850:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 1850 and carstate.distance_from_start < 1950 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 1850 and carstate.distance_from_start < 1950 and carstate.speed_x > 90 * MPS_PER_KMH: #60
             command.accelerator = 0
             command.brake = 1
         elif carstate.distance_from_start > 1950 and carstate.distance_from_start < 2300:
@@ -129,16 +132,16 @@ class Driver:
         elif carstate.distance_from_start > 2750 and carstate.distance_from_start < 2900:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 2900 and carstate.distance_from_start < 2950 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 2900 and carstate.distance_from_start < 2950 and carstate.speed_x > 80 * MPS_PER_KMH: #60
             command.accelerator = 0
             command.brake = 1
         elif carstate.distance_from_start > 3020 and carstate.distance_from_start < 3100:
             command.accelerator = acceleration_const
             command.brake = 0
-        elif carstate.distance_from_start > 3150 and carstate.distance_from_start < 3350 and carstate.speed_x > 60 * MPS_PER_KMH:
+        elif carstate.distance_from_start > 3200 and carstate.distance_from_start < 3300 and carstate.speed_x > 60 * MPS_PER_KMH:
             command.accelerator = 0
             command.brake = 1
-        elif carstate.distance_from_start > 3400 and carstate.distance_from_start < 3600:
+        elif carstate.distance_from_start > 3300 and carstate.distance_from_start < 4000: #3400-3600
             command.accelerator = acceleration_const
             command.brake = 0
         else:
