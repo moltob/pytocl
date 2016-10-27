@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from pytocl.protocol import Client
+from shockwave.shockwave import Shockwave
 
 
 def main():
@@ -24,7 +25,7 @@ def main():
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)7s %(name)s %(message)s")
 
     # start client loop:
-    client = Client(**args.__dict__)
+    client = Client(driver=Shockwave(), **args.__dict__)
     client.run()
 
 
