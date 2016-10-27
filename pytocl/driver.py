@@ -45,12 +45,6 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
-    def __init__(self, logdata=True):
-        self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
-
-        self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
-
     @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
@@ -83,6 +77,7 @@ class Driver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.dt = 0.020
+        self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
         self.pidSpeed = Pid()
         self.pidAngle = Pid()
         self.pidDistCenter = Pid()
@@ -155,10 +150,9 @@ class Driver:
 
 
         trackPos = carstate.distance_from_center
-        speed = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
+        speed_mps = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
 
         trackPos_SetPoint = 0.0
-        speed_SetPoint = 100.0 * MPS_PER_KMH
         angle_SetPoint = 0.0
 
         trackPos_Diff = trackPos_SetPoint - trackPos
@@ -195,13 +189,13 @@ class Driver:
         self.speedSetPoint = speed_SetPoint
         cmdDistCenter = self.pidDistCenter.calc(trackPos_SetPoint, trackPos, self.dt, distCenterKp, distCenterKd, distCenterKi)
         cmdAngle = self.pidAngle.calc(angle_SetPoint, carstate.angle, self.dt, angleKp, angleKd, angleKi)
-        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint, speed, self.dt, speedKp, speedKd, speedKi)
+        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint, speed_mps, self.dt, speedKp, speedKd, speedKi)
 
         if(printDistance):
             abs = False
             for wheel_speed in carstate.wheel_velocities:
                 print('WHEEL SPEED = ' + str(wheel_speed))
-                print('SPEED = ' + str(speed))
+                print('SPEED = ' + str(speed_mps))
 
 
         command.steering = -cmdAngle  + cmdDistCenter
