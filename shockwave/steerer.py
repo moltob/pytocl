@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 class Steerer:
     def __init__(self, plan):
         self.plan = plan
-        self.pid = PID(0.3, 20, 0)
+        self.pid = PID(0.3, 50, 0.01)
         self.angle = 0
 
     def get_steering_angle(self, state: State):

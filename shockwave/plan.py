@@ -1,42 +1,35 @@
 from pytocl.car import State
+import math
+
+from shockwave.pid import PID
 
 
 class Plan:
     def __init__(self, strategy):
         self.strategy = strategy
         self.state = None
+        self.pid = PID(1, 30, 0)
 
-        self.speed_setting = {
-            0: 80,
-            150: 20,
-            240: 80,
-            370: 15,
-            540: 80,
-            690: 20,
-            800: 80,
-            950: 15,
-            1000: 80,
-            1430: 20,
-            1500: 80,
-            1850: 20,
-            1960: 80,
-            2300: 20,
-            2380: 8,
-            2530: 80,
-            2660: 20,
-            2760: 80,
-            2900: 15,
-            2950: 80,
-            3200: 10,
-            3320: 80
-        }
 
     def get_desired_position(self):
         return 0
 
     def get_desired_speed(self):
-        index = max([x for x in self.speed_setting.keys() if x < self.state.distance_from_start])
-        return self.speed_setting[index]
+        #index = max([x for x in self.speed_setting.keys() if x < self.state.distance_from_start])
+        dfe = self.state.distances_from_edge
+
+        min_dist = max(dfe[9], dfe[10], dfe[11])
+        if (min_dist > 190):
+            speed = 100
+        elif min_dist < 0:
+            speed = 10
+        else:
+           # print(min_dist)
+            speed = min_dist + 5
+
+        speed = max(-self.pid.get_action(min_dist), 10)
+
+        return speed
 
     def get_desired_angle(self):
         return 0
