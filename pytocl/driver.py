@@ -15,7 +15,7 @@ class Driver:
     """
 
 
-    CURVE_DETECTION_THRESHOLD = 50
+    CURVE_DETECTION_THRESHOLD = 48
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
@@ -147,7 +147,7 @@ class Driver:
                     self.breaking += 0.02
                 else:
                     if (carstate.speed_x*KMH_PER_MPS > 150):
-                        self.breaking = 0.5
+                        self.breaking = 0.60
                     else:
                         self.breaking = 0.20
         else:
