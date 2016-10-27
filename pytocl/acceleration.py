@@ -13,4 +13,4 @@ class Acceleration:
         else:
             self.deltaAcceleration = 0
 
-        self.control.update(self.deltaAcceleration)
+        return self.control.update(self.deltaAcceleration)
