@@ -24,33 +24,34 @@ class Driver:
         self.pid_dist = PID(2.5, 0.01, 0.7)
         self.pid_speed = PID(2.5, 0.01, 0.7)
         self.speedlist = SpeedList()
+        self.createCorkScrewSpeedlist()
 
-    @property
     def createCorkScrewSpeedlist(self):
         self.speedlist.add(0,70)
-        self.speedlist.add(50,200)
-        self.speedlist.add(200,150)
-        self.speedlist.add(250,200)
+        self.speedlist.add(50,100)
+        self.speedlist.add(200,100)
+        self.speedlist.add(250,100)
         self.speedlist.add(400,80)
-        self.speedlist.add(500,200)
-        self.speedlist.add(720,80)
-        self.speedlist.add(800,200)
+        self.speedlist.add(500,150)
+        self.speedlist.add(720,50)
+        self.speedlist.add(800,150)
         self.speedlist.add(950,100)
-        self.speedlist.add(1020,250)
+        self.speedlist.add(1020,150)
         self.speedlist.add(1450,70)
-        self.speedlist.add(1550,300)
+        self.speedlist.add(1550,100)
         self.speedlist.add(1900,70)
-        self.speedlist.add(1940,300)
+        self.speedlist.add(1940,150)
         self.speedlist.add(2340,70)
         self.speedlist.add(2380,30)
         self.speedlist.add(2500,150)
         self.speedlist.add(2700,70)
-        self.speedlist.add(2770,200)
+        self.speedlist.add(2770,150)
         self.speedlist.add(2930,100)
-        self.speedlist.add(2990,200)
+        self.speedlist.add(2990,150)
         self.speedlist.add(3230,30)
-        self.speedlist.add(3320,200)
-    
+        self.speedlist.add(3320,150)
+
+    @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
 
@@ -91,6 +92,8 @@ class Driver:
 
         #_logger.info('speed_control: {}'.format(speed_control))
 
+        #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start)
+
         self.accel_and_brake(carstate.speed_x, tar_speed)
 
         command.accelerator = self.accelerator
@@ -125,7 +128,7 @@ class Driver:
             self.brake += 0.1
             self.accelerator = 0
         elif cur_speed > target_speed * MPS_PER_KMH:
-            self.brake = 0.1
+            self.brake -= 0.1
             self.accelerator = 0
         else:
             self.accelerator = 0
