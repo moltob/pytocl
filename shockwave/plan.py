@@ -10,12 +10,41 @@ class Plan:
         self.state = None
         self.pid = PID(1, 30, 0)
 
-
     def get_desired_position(self):
+        dfe = self.state.distances_from_edge
+        center_index = int(self.state.angle / 10) + 10 if abs(int(self.state.angle / 10)) < 8 else None
+        if center_index is None:
+            return 0
+
+        if dfe[center_index] < 0:
+            return 0
+
+        if dfe[center_index] > 195:
+            return 0
+
+        right = False
+        if dfe[center_index-1] < dfe[center_index] and dfe[center_index-2] < dfe[center_index]:
+            right = True
+        left = False
+        if dfe[center_index + 1] < dfe[center_index] and dfe[center_index + 2] < dfe[center_index]:
+            left = True
+
+        if right and left:
+            print("BOTH")
+            return 0
+        elif right:
+            print("RIGHT")
+            return -0.5
+        elif left:
+            print("LEFT")
+            return 0.5
+        else:
+            print("KEINE")
+            return 0
+
         return 0
 
     def get_desired_speed(self):
-        #index = max([x for x in self.speed_setting.keys() if x < self.state.distance_from_start])
         dfe = self.state.distances_from_edge
 
         min_dist = max(dfe[9], dfe[10], dfe[11])
