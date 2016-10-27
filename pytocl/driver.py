@@ -3,7 +3,8 @@ import logging
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 
-from pytocl.stability_controller import StabilityController
+from pytocl.stability import StabilityController
+from pytocl.strategy import StrategyController
 
 _logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class Driver:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
         self.stability_controller = StabilityController()
+        self.strategy_controller = StrategyController()
 
     @property
     def range_finder_angles(self):
@@ -47,6 +49,7 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        (speed, target_pos) = self.strategy_controller.control(carstate)
         next_command = self.stability_controller.control(50, 0, carstate)
 
         if self.data_logger:
