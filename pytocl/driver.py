@@ -52,7 +52,17 @@ class Driver:
             command.gear = carstate.gear - 1
 
     def select_steering(self, carstate: State, command: Command):
-        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+        #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+        #steering_angle = (carstate.angle * 0.3) / 21
+        steering_angle = (carstate.angle * (1-(carstate.speed_x/100))) / 21
+        print ((carstate.speed_y/10))
+
+        if (steering_angle >= 0):
+            steering_angle = max (steering_angle, -10/21)
+        else:
+            steering_angle = min (steering_angle, 10/21)
+
+        command.steering = (steering_angle)
 
     def select_acceleration(self, carstate: State, command: Command):
         if carstate.speed_x < 50 * MPS_PER_KMH:
