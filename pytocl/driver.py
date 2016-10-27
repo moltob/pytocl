@@ -3,6 +3,8 @@ import logging
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 
+from pytocl.stability_controller import StabilityController
+
 _logger = logging.getLogger(__name__)
 
 
@@ -16,7 +18,7 @@ class Driver:
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
+        self.stability_controller = StabilityController()
 
     @property
     def range_finder_angles(self):
@@ -45,32 +47,9 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-        command = Command()
-
-        # dummy steering control:
-        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
-
-        # basic acceleration to target speed:
-        if carstate.speed_x < 50 * MPS_PER_KMH:
-            self.accelerator += 0.1
-        else:
-            self.accelerator = 0
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
-
-        # gear shifting:
-        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
-        command.gear = carstate.gear or 1
-        if carstate.rpm > 7000 and carstate.gear < 6:
-            _logger.info('switching up')
-            command.gear = carstate.gear + 1
-        elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
-            command.gear = carstate.gear - 1
+        next_command = self.stability_controller.control(50, 0, carstate)
 
         if self.data_logger:
-            self.data_logger.log(carstate, command)
+            self.data_logger.log(carstate, next_command)
 
-        return command
+        return next_command
