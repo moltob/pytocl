@@ -15,7 +15,7 @@ class Driver:
     """
 
 
-    CURVE_DETECTION_THRESHOLD = 52
+    CURVE_DETECTION_THRESHOLD = 50
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
@@ -80,9 +80,9 @@ class Driver:
         if (dist_centre > dist_left and dist_centre > dist_right):
             self.currentAngleCorr += 0.0
         elif (dist_left > dist_right):
-            self.currentAngleCorr += 0.22
+            self.currentAngleCorr += 0.25
         else:
-            self.currentAngleCorr -= 0.22
+            self.currentAngleCorr -= 0.25
 
         command.steering = self.currentAngleCorr
 
@@ -140,12 +140,14 @@ class Driver:
             self.accelerator = 0
 
         if self.target_velocity * MPS_PER_KMH < carstate.speed_x:
-            if (carstate.speed_x * KMH_PER_MPS - self.target_velocity ) >= 40:
+            if (carstate.speed_x - self.target_velocity * MPS_PER_KMH) < 5:
+                self.breaking = 0.0
+            elif (carstate.speed_x * KMH_PER_MPS - self.target_velocity ) >= 40:
                 if self.breaking > 0.0:
                     self.breaking += 0.02
                 else:
                     if (carstate.speed_x*KMH_PER_MPS > 150):
-                        self.breaking = 0.35
+                        self.breaking = 0.5
                     else:
                         self.breaking = 0.20
         else:
