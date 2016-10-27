@@ -49,7 +49,8 @@ class Driver:
         track.
         """
         command = Command()
-        self.dynamic.simple(carstate)
+        lane = Lane()
+        self.dynamic.simple(carstate,lane)
         command.steering = self.dynamic.speed
         command.accelerator = self.dynamic.accelerator
         command.brake = self.dynamic.brake

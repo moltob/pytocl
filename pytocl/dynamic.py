@@ -1,4 +1,6 @@
 from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.lane import lane
+
 
 class Dynamic:
 
@@ -23,18 +25,18 @@ class Dynamic:
     def simple(self, carstate, lane):
 
         # dummy steering control:
-         if ((carstate.distance_from_center < -0.5) or (carstate.distance_from_center > 0.5)):
-             self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+         #if ((carstate.distance_from_center < -0.5) or (carstate.distance_from_center > 0.5)):
+         #    self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
-        speed = lane.velocity;
-        angle = lane.angle();
+         speed = lane.velocity()
+         angle = lane.angle()
+
+         if (speed < carstate.speed_x):
+                if (carstate.speed_x > carstate.speed_y):
+                    self.accelerator += 0.5
+                    self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
 
-        # basic acceleration to target speed:
-         if carstate.speed_x <50 * MPS_PER_KMH:
-             self.accelerator += 0.1
-         else:
-             self.accelerator = 0
          self.accelerator = min(1, self.accelerator)
          self.accelerator = max(-1, self.accelerator)
 
