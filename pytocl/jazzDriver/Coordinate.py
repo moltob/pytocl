@@ -1,12 +1,12 @@
-class Coordinate():
+class Coordinate:
     def __init__(self, distance, angle):
-        self.distance = 0
-        self.angle = 0
+        self._distance = distance
+        self._angle = angle
 
     @property
     def distance(self):
-        return self.distance
+        return self._distance
 
     @property
     def angle(self):
-        return self.angle
+        return self._angle

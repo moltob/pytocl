@@ -2,25 +2,16 @@ import logging
 
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
-from .jazzDriver.jazzdriver import JazzDriver
-from .jazzDriver.jazzTrackTrainer import JazzTrackTrainer
 
 _logger = logging.getLogger(__name__)
 
-
-class Driver:
-    """Driving logic.
-
-    Implement the driving intelligence in this class by processing the current car state as inputs
-    creating car control commands as a response. The ``drive`` function is called periodically
-    every 20ms and must return a command within 10ms wall time.
-    """
-
+class JazzTrackTrainer:
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
-        self.jazzDriver = JazzDriver()
-        self.trackTrainer = JazzTrackTrainer()
+        self.acceleration = 0
+        self.brake = 0
+        self.angle = 0
+        self.gear = 1
 
     @property
     def range_finder_angles(self):
@@ -43,26 +34,30 @@ class Driver:
             self.data_logger = None
 
     def drive(self, carstate: State) -> Command:
-        """Produces driving command in response to newly received car state.
-
-        This is a dummy driving routine, very dumb and not really considering a lot of inputs. But
-        it will get the car (if not disturbed by other drivers) successfully driven along the race
-        track.
-        """
         command = Command()
+        _logger.info('switching up')
 
-        # dummy steering control:
-        command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+        keyUp = False
+        keyDown = False
+        keyLeft = False
+        keyRight = False
 
-        # basic acceleration to target speed:
-        if carstate.speed_x < 50 * MPS_PER_KMH:
-            self.accelerator += 0.1
+        if keyUp:
+            self.acceleration = 1
         else:
-            self.accelerator = 0
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
+            self.acceleration = 0
+
+        if keyDown:
+            self.brake = 1
+        else:
+            self.brake = 0
+
+        if keyLeft:
+            self.angle -= 0.1
+        if keyRight:
+            self.angle += 0.1
+        self.angle = min(1, self.angle)
+        self.angle = max(-1, self.angle)
 
         # gear shifting:
         _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
@@ -74,8 +69,11 @@ class Driver:
             _logger.info('switching down')
             command.gear = carstate.gear - 1
 
+        command.accelerator = self.acceleration
+        command.brake = self.brake
+        command.steering = self.angle
+
         if self.data_logger:
             self.data_logger.log(carstate, command)
 
-        #return self.trackTrainer.drive(carstate)
-        return self.jazzDriver.drive(carstate)
+        return command
