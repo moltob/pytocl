@@ -1,7 +1,7 @@
 import logging
 
 from pytocl.analysis import DataLogWriter
-from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.car import State, Command, MPS_PER_KMH, KMH_PER_MPS
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +26,8 @@ class Driver:
         self.angle_diff_quotient = 0.0
         self.target_velocity = 50
         self.prev_dist_from_edge_mitte = 0.0
+        self.brake_begin = False
+        self.brake_begin_consumed = False
 
     @property
 
@@ -53,21 +55,34 @@ class Driver:
         # gear shifting:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
-        if carstate.rpm > 7000 and carstate.gear < 6:
-            _logger.info('switching up')
+        if carstate.rpm > 8500 and carstate.gear < 6:
+            #_logger.info('switching up')
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
+            #_logger.info('switching down')
             command.gear = carstate.gear - 1
 
+
     def control_steering_angle (self, carstate: State, command: Command):
-        self.currentAngleCorr = 1.0*(carstate.angle / 21) + 0.0*(self.currentAngleCorr)
+
+        self.currentAngleCorr = (carstate.angle / 21)
 
         # korrektur zum zentrum
         if (carstate.distance_from_center > 0.1  and self.currentAngleCorr < 1):
             self.currentAngleCorr -= 0.2
         elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > -1):
             self.currentAngleCorr += 0.2
+
+        dist_left = (carstate.distances_from_edge[6] + carstate.distances_from_edge[7] + carstate.distances_from_edge[8])/3
+        dist_right = (carstate.distances_from_edge[10] + carstate.distances_from_edge[11] + carstate.distances_from_edge[12])/3
+        dist_centre = carstate.distances_from_edge[9]
+
+        if (dist_centre > dist_left and dist_centre > dist_right):
+            self.currentAngleCorr += 0.0
+        elif (dist_left > dist_right):
+            self.currentAngleCorr += 0.2
+        else:
+            self.currentAngleCorr -= 0.2
 
         command.steering = self.currentAngleCorr
 
@@ -80,19 +95,29 @@ class Driver:
                                 carstate.distances_from_edge[10] +
                                 carstate.distances_from_edge[11]) / 5
 
-        print("dist edge mitte" + str(dist_from_edge_mitte))
+        #print("dist edge mitte" + str(dist_from_edge_mitte))
 
-        if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD):
+#        self.target_velocity = carstate.speed_x * KMH_PER_MPS
+        current_velocity_kmh =  carstate.speed_x * KMH_PER_MPS
+
+        if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD * (current_velocity_kmh / 150)):
             # if leaving turn
             if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
                 self.target_velocity += 15
-            else:
-                self.target_velocity -= 25
-        elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
-            self.target_velocity = 190
 
-        if self.target_velocity < 60:
-            self.target_velocity = 60;
+            else:
+                if (self.brake_begin_consumed == False) :
+                    self.target_velocity = current_velocity_kmh - 20
+                    self.brake_begin_consumed = True
+                else:
+                    self.target_velocity -= 20
+
+        elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
+            self.brake_begin_consumed = False
+            self.target_velocity = 250
+
+        if self.target_velocity < 65:
+            self.target_velocity = 65;
 
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
@@ -104,22 +129,21 @@ class Driver:
 
 
     def select_acceleration(self, carstate: State, command: Command):
-        # if carstate.speed_x < 80 * MPS_PER_KMH:
-        #     self.accelerator += 0.1
-        # else:
-        #     self.accelerator = 0
 
         if carstate.speed_x < self.target_velocity * MPS_PER_KMH:
-            self.accelerator += 0.1
+            self.accelerator += 0.2
         else:
             self.accelerator = 0
 
         if self.target_velocity * MPS_PER_KMH < carstate.speed_x:
-            if (carstate.speed_x - self.target_velocity * MPS_PER_KMH ) > 20:
+            if (carstate.speed_x * KMH_PER_MPS - self.target_velocity ) >= 40:
                 if self.breaking > 0.0:
-                    self.breaking += 0.1
+                    self.breaking += 0.02
                 else:
-                    self.breaking = 0.6
+                    if (carstate.speed_x*KMH_PER_MPS > 150):
+                        self.breaking = 0.35
+                    else:
+                        self.breaking = 0.2
         else:
             self.breaking = 0.0
 
@@ -132,10 +156,10 @@ class Driver:
         command.brake = self.breaking
 
         #if (command.brake > 0.0):
-        _logger.info('accelerator: {}'.format(command.accelerator))
+        #_logger.info('accelerator: {}'.format(command.accelerator))
         _logger.info('break: {}'.format(self.breaking))
-        # _logger.info('target velocity: {}'.format(self.target_velocity))
-        # _logger.info('current speed: {}'.format(carstate.speed_x))
+        _logger.info('target velocity: {}'.format(self.target_velocity))
+        _logger.info('current speed: {}'.format(carstate.speed_x * KMH_PER_MPS))
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
