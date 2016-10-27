@@ -84,6 +84,7 @@ class Driver:
         self.timeMsec = 0
         self.curves = list()
         self.speedSetPoint = 0.0
+        
 
         c0 = Curve(100, 150, 150)
         self.curves.append(c0)
