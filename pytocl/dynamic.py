@@ -43,7 +43,7 @@ class Dynamic:
                 print("BRAKE HARD")
         # mittel
             elif (dSpeedFactor >= 25) and (dSpeedFactor < 70):
-                self.brake = 0.75
+                self.brake = 0.80
                 print("BRAKE MID")
         # sanft bremsen
             elif (dSpeedFactor >=70) and (dSpeedFactor <95):
@@ -72,7 +72,7 @@ class Dynamic:
         if (angle == 500):
             self.steering = (carstate.angle - carstate.distance_from_center * 0.2)
         else:
-            self.steering = (-1)*angle/90
+            self.steering = (-1)*angle/77
 
 
 
