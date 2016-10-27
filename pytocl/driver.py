@@ -146,7 +146,7 @@ class Driver:
         speedKi = 0.0
 
         #angleKp = 0.07
-        angleKp = 0.025
+        angleKp = 0.03
         angleKd = 0.01 #0.02
         angleKi = 0.0
 
