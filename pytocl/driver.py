@@ -37,20 +37,6 @@ class Curve:
     def speed(self):
         return self.spe
 
-    def speedCalculation(self):
-        if(self.difficulty == 0):
-            return 60
-        elif(self.difficulty == 1):
-            return 80
-        elif(self.difficulty == 2):
-            return 90
-        elif (self.difficulty == 3):
-            return 100
-        elif (self.difficulty == 4):
-            return 110
-        else:
-            return 90
-
 class Driver:
     """Driving logic.
 
@@ -143,8 +129,6 @@ class Driver:
         if(self.timeMsec % 1000 == 0):
             printDistance = True
 
-        # dummy steering control:
-        #distCenterKp = 10.0
         distCenterKp = 2.5
         distCenterKd = 4.0
         distCenterKi = 0.0 #10.0
@@ -172,13 +156,15 @@ class Driver:
 
         trackDistance = carstate.distance_from_start
 
-        print('')
-        print('TRACK DISTANCE='+ str(trackDistance))
-        print('TRACK DISTANCE='+ str(trackDistance))
-        print('TRACK DISTANCE='+ str(trackDistance))
-        print('')
+        #print('')
+        #print('TRACK DISTANCE='+ str(trackDistance))
+        #print('TRACK DISTANCE='+ str(trackDistance))
+        #print('TRACK DISTANCE='+ str(trackDistance))
+        #print('')
 
-        speed_SetPoint = 210.0
+        MAX_SPEED = 240.0
+
+        speed_SetPoint = MAX_SPEED
         for c in self.curves:
             start = c.startPoint()
             end = c.endPoint()
@@ -200,7 +186,12 @@ class Driver:
         cmdAngle = self.pidAngle.calc(angle_SetPoint, carstate.angle, self.dt, angleKp, angleKd, angleKi)
         cmdAccelerator = self.pidSpeed.calc(speed_SetPoint, speed, self.dt, speedKp, speedKd, speedKi)
 
-        print('cmdAngle='+str(cmdAngle))
+        if(printDistance):
+            abs = False
+            for wheel_speed in carstate.wheel_velocities:
+                print('WHEEL SPEED = ' + str(wheel_speed))
+                print('SPEED = ' + str(speed))
+
 
         command.steering = -cmdAngle  + cmdDistCenter
         command.accelerator = 0.0
@@ -229,8 +220,5 @@ class Driver:
         ##if self.data_logger:
          ##   self.data_logger.log(carstate, command)
 
-        if(True == printDistance):
-            _logger.info(carstate.distance_from_start)
-            print(carstate.distance_from_start)
 
         return command

@@ -4,6 +4,11 @@ import logging
 
 from pytocl.protocol import Client
 
+def pid(dt, kp, kd, ki, xnew, xold):
+    d = (xnew - xold) / dt
+    i = dt * (xnew - xold) / 2
+
+
 
 def main():
     """Main entry point of application."""
@@ -30,3 +35,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+    #print('Hallo Daniele')
