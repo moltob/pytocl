@@ -5,7 +5,7 @@ from enum import Enum
 _logger = logging.getLogger(__name__)
 
 
-class Curve(Enum):
+class Side(Enum):
     """Stereotype of a component."""
 
     NONE = 0
@@ -24,8 +24,16 @@ class StrategyController:
         return self.speed, self.target_pos
 
     def control_speed(self, carstate: State):
-        cshape = self.detect_curve(carstate, 95)
-        lane = self.detect_curve_lane(carstate)
+        cshape = self.detect_curve(carstate, 100)
+        #opponent_pos = self.detect_opponent(carstate)
+        #if opponent_pos == Side.LEFT:
+        #    lane = 0.9
+        #elif opponent_pos == Side.RIGHT:
+        #    lane = -0.9
+        #else:
+        #    lane = 0.0 #self.detect_curve_lane(carstate)
+        lane = 0.0  # self.detect_curve_lane(carstate)
+
         m = carstate.distances_from_edge
         _logger.info('dist: {}, CURVE: {} -- LANE: {}||| {} || {} || {}'.format(carstate.distance_from_start, cshape, lane, m[8], m[9], m[10]))
         if cshape == 0:
@@ -33,13 +41,21 @@ class StrategyController:
         else:
             return 600 - 550*abs(cshape), lane
 
+    def detect_opponent(self, carstate: State):
+        oppenent_pos = Side.NONE
+        if carstate.opponents[16] < 20:
+            oppenent_pos = Side.LEFT
+        elif carstate.opponents[19] < 20:
+            oppenent_pos = Side.RIGHT
+        return oppenent_pos
+
     def detect_curve_lane(self, carstate):
         cshape = self.detect_curve(carstate, 40)
         if cshape != 0:
             if cshape < 0:
-                cshape = 2.0
+                cshape = 1.5
             else:
-                cshape = -2.0
+                cshape = -1.5
         else:
             cshape = self.detect_curve(carstate, 180)
             if cshape > 0:
