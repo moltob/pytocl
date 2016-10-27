@@ -1,16 +1,7 @@
-from pytocl.car import State
+from pytocl.car import State, CustomData
 import logging
-from enum import Enum
 
 _logger = logging.getLogger(__name__)
-
-
-class Curve(Enum):
-    """Stereotype of a component."""
-
-    NONE = 0
-    LEFT = 1
-    RIGHT = 2
 
 
 class StrategyController:
@@ -18,14 +9,14 @@ class StrategyController:
         self.speed = 0
         self.target_pos = 0
 
-    def control(self, carstate: State):
-        self.speed = self.control_speed(carstate)
+    def control(self, carstate: State, custom_data: CustomData):
+        self.speed = self.control_speed(carstate, custom_data)
 
         return self.speed, self.target_pos
 
-    def control_speed(self, carstate: State):
+    def control_speed(self, carstate: State, custom_data: CustomData):
         cshape = self.detect_curve(carstate)
-        _logger.info('StrategyController: {}'.format(cshape))
+        custom_data.cshape = cshape
         if cshape == 0:
             return 400
         else:

@@ -25,6 +25,11 @@ class Value:
                 yield value
 
 
+class CustomData(Value):
+    def __init__(self):
+        cshape = 0.0
+
+
 class State(Value):
     """State of car and environment, sent periodically by racing server.
 

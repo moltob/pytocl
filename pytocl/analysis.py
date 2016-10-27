@@ -30,10 +30,10 @@ class DataLogWriter:
         """Try to save data before instance is destroyed."""
         self.close()
 
-    def log(self, state, command):
+    def log(self, state, command, custom):
         """Log pair of data."""
         if self.logging:
-            self.pickler.dump((state, command))
+            self.pickler.dump((state, command, custom))
             self.numlogged += 1
         else:
             _logger.warning('Logger closed, cannot log data to file.')
@@ -55,10 +55,11 @@ class DataLogWriter:
 class DataLogReader:
     """Deserialization of logged data as ``np.array``."""
 
-    def __init__(self, filepath, state_attributes=None, command_attributes=None):
+    def __init__(self, filepath, state_attributes=None, command_attributes=None, custom_data_attributes=None):
         self.filepath = filepath
         self.state_attributes = state_attributes or []
         self.command_attributes = command_attributes or []
+        self.custom_data_attributes = custom_data_attributes or []
 
         self._current_lap_time = 0
         self._last_laps_accumulated_time = 0
@@ -87,7 +88,7 @@ class DataLogReader:
         """Iterates over rows in data."""
         try:
             while True:
-                state, command = unpickler.load()
+                state, command, custom_data = unpickler.load()
 
                 # compute accumulated race time:
                 if self._current_lap_time > state.current_lap_time:
@@ -96,7 +97,8 @@ class DataLogReader:
 
                 row = itertools.chain((self.overall_time,),
                                       state.chain(*self.state_attributes),
-                                      command.chain(*self.command_attributes))
+                                      command.chain(*self.command_attributes),
+                                      custom_data.chain(*self.custom_data_attributes))
                 self._numrows += 1
 
                 yield row

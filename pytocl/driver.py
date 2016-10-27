@@ -1,7 +1,7 @@
 import logging
 
 from pytocl.analysis import DataLogWriter
-from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.car import State, Command, MPS_PER_KMH, CustomData
 
 from pytocl.stability import StabilityController
 from pytocl.strategy import StrategyController
@@ -49,10 +49,11 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-        (speed, target_pos) = self.strategy_controller.control(carstate)
+        custom_data = CustomData()
+        (speed, target_pos) = self.strategy_controller.control(carstate, custom_data)
         next_command = self.stability_controller.control(speed, target_pos, carstate)
 
         if self.data_logger:
-            self.data_logger.log(carstate, next_command)
+            self.data_logger.log(carstate, next_command, custom_data)
 
         return next_command
