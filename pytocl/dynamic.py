@@ -11,13 +11,27 @@ class Dynamic:
         self.brake = 0
         self.steering = 0
 
-    def simple(self, carstate):
+    def correctGear(self, carstate):
+        self.gear = carstate.gear or 1
+        if carstate.rpm > 7000 and carstate.gear < 6:
+            # _logger.info('switching up')
+            self.gear = carstate.gear + 1
+        elif carstate.rpm < 2000 and carstate.gear > 1:
+            # _logger.info('switching down')
+            self.gear = carstate.gear - 1
+
+    def simple(self, carstate, lane):
 
         # dummy steering control:
-         self.steering = (carstate.angle - carstate.distance_from_center * 0.1)
+         if ((carstate.distance_from_center < -0.5) or (carstate.distance_from_center > 0.5)):
+             self.steering = (carstate.angle - carstate.distance_from_center * 0.5)
+
+        speed = lane.velocity;
+        angle = lane.angle();
+
 
         # basic acceleration to target speed:
-         if carstate.speed_x <30 * MPS_PER_KMH:
+         if carstate.speed_x <50 * MPS_PER_KMH:
              self.accelerator += 0.1
          else:
              self.accelerator = 0
