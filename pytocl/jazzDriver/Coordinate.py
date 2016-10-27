@@ -10,3 +10,11 @@ class Coordinate:
     @property
     def angle(self):
         return self._angle
+
+    @angle.setter
+    def angle(self, value):
+        self._angle = value
+
+    @distance.setter
+    def distance(self, value):
+        self._distance = value
