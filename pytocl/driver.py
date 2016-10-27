@@ -4,6 +4,8 @@ from pytocl.steering import Steering
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 
+from pytocl.acceleration import Acceleration
+
 _logger = logging.getLogger(__name__)
 
 
@@ -55,15 +57,8 @@ class Driver:
         command.steering = self.steeringControl.update(carstate)
 
         # basic acceleration to target speed:
-        if carstate.speed_x < 80 * MPS_PER_KMH:
-            self.accelerator += 0.1
-        else:
-            self.accelerator = 0
-
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-
-        command.accelerator = self.accelerator
+        self.accelerator.update(carstate)
+        command.accelerator = self.accelerator.control
         _logger.info('accelerator: {}'.format(command.accelerator))
 
         # gear shifting:
