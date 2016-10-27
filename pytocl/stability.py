@@ -30,10 +30,10 @@ class GearboxController:
     def control(self, rpm, gear):
         # gear shifting:
         self.gear_control = gear or 1
-        if rpm > 7000 and gear < 6:
+        if rpm > 8000 and gear < 6:
             _logger.info('switching up')
             self.gear_control = gear + 1
-        elif rpm < 2000 and gear > 1:
+        elif rpm < 3000 and gear > 1:
             _logger.info('switching down')
             self.gear_control = gear - 1
 
