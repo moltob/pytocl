@@ -32,18 +32,32 @@ class Dynamic:
 
         angle = mylane.angle()
 
-        if (speed < carstate.speed_x):
-            self.brake = 0.6
-        else : self.brake = 0
+        dSpeed = speed - carstate.speed_x
 
-        if (speed > carstate.speed_x):
-            if ((carstate.speed_x < carstate.speed_y) or (carstate.speed_y<5)):
-                self.accelerator += 0.8
-        else:
-            self.accelerator -= 0.35
+        #bremsen
+        if (dSpeed < 0):
+            dSpeedFactor = (100/carstate.speed_x) * speed
+        # hart bremsen
+            if (dSpeedFactor < 20):
+                self.brake = 1
+                print("BRAKE HARD")
+        # mittel
+            elif (dSpeedFactor >= 20) and (dSpeedFactor < 70):
+                self.brake = 0.6
+                print("BRAKE MID")
+        # sanft bremsen
+            elif (dSpeedFactor >=70) and (dSpeedFactor <95):
+                self.brake = 0.4
+                print("BRAKE LIGHT")
+            else :
+                print("BRAKE NO")
+        else :
+            self.brake = 0
+
+        accelerate(speed, carstate)
 
 
-        print ("%f -> x %f  y %f" % (speed, carstate.speed_x, carstate.speed_y))
+       # print ("%f -> x %f  y %f" % (speed, carstate.speed_x, carstate.speed_y))
 
 
         # if ((carstate.distance_from_center < -0.2) or (carstate.distance_from_center > 0.2)):
@@ -71,9 +85,19 @@ class Dynamic:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
 
         self.gear = carstate.gear or 1
-        if carstate.rpm > 7000 and carstate.gear < 6:
+        if carstate.rpm > 7700 and carstate.gear < 6:
             # _logger.info('switching up')
             self.gear = carstate.gear + 1
-        elif carstate.rpm < 2000 and carstate.gear > 1:
+        elif carstate.rpm < 2400 and carstate.gear > 1:
             #_logger.info('switching down')
             self.gear = carstate.gear - 1
+
+    def accelerate (self, speed, carstate : State):
+
+        if (speed > carstate.speed_x):
+            if carstate.speed_y >= 0:
+                self.accelerator += 1
+            else:
+                self.accelerator -= 0.5
+        else:
+            self.accelerator -= 0.5

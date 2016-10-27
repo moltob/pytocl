@@ -19,7 +19,7 @@ class DataLogWriter:
         timestr = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         fname = 'drivelog-{}.pickle'.format(timestr)
         fpath = os.path.abspath(os.path.join(dirname, fname))
-        _logger.info('Logging data snapshots to {}.'.format(fpath))
+        #_logger.info('Logging data snapshots to {}.'.format(fpath))
 
         os.makedirs(dirname, exist_ok=True)
         self.file = open(fpath, 'wb')
@@ -42,7 +42,7 @@ class DataLogWriter:
         """End logging by closing the associated file."""
         if self.logging:
             self.file.close()
-            _logger.info('Saved {} log entries.'.format(self.numlogged))
+            #_logger.info('Saved {} log entries.'.format(self.numlogged))
             self.file = None
             self.pickler = None
             self.numlogged = 0
@@ -74,7 +74,7 @@ class DataLogReader:
         self._last_laps_accumulated_time = 0
         self._numrows = 0
 
-        _logger.info('Accessing data log {}.'.format(self.filepath))
+        #_logger.info('Accessing data log {}.'.format(self.filepath))
         with open(self.filepath, 'rb') as logfile:
             unpickler = pickle.Unpickler(logfile)
             rows = self.rows(unpickler)
