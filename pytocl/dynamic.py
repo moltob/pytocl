@@ -94,10 +94,37 @@ class Dynamic:
 
     def accelerate (self, speed, carstate : State):
 
+        if self.accelerator < 0.1:
+            self.accelerator = 0.3
+
+        self.brake = 0
         if (speed > carstate.speed_x):
-            if abs(carstate.speed_y) >= 0:
-                self.accelerator += 1
-            else:
-                self.accelerator -= 0.5
+            if carstate.speed_x > carstate.speed_y:
+                if speed - carstate.speed_x > 20:
+                    self.accelerator += 0.4
+                elif speed - carstate.speed_x > 10:
+                    self.accelerator += 0.2
+                else:
+                    if abs(carstate.angle) > 20:
+                        self.brake = 0.4
+                    elif abs(carstate.angle) > 15:
+                        self.brake = 0.3
+                    elif abs(carstate.angle) > 10:
+                        self.brake = 0.1
+                    else:
+                        self.brake = 0
+        elif speed < carstate.speed_x:
+            self.brake = 0.7
+            self.accelerator -= 0.5
         else:
-            self.accelerator -= 0.7
+            self.accelerator += 0.01
+
+
+
+            #if (speed > carstate.speed_x):
+        #    if abs(carstate.speed_y) >= 0:
+         #       self.accelerator += 1
+         #   else:
+         #       self.accelerator -= 0.5
+        #else:
+        #    self.accelerator -= 0.7
