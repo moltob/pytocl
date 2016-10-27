@@ -15,7 +15,7 @@ class Driver:
     """
 
 
-    CURVE_DETECTION_THRESHOLD = 55
+    CURVE_DETECTION_THRESHOLD = 52
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
@@ -100,10 +100,15 @@ class Driver:
 #        self.target_velocity = carstate.speed_x * KMH_PER_MPS
         current_velocity_kmh =  carstate.speed_x * KMH_PER_MPS
 
+
         if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD * (current_velocity_kmh / 150)):
+
+            print(carstate.speed_y*KMH_PER_MPS)
+
             # if leaving turn
             if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
-                    self.target_velocity += 15
+                    self.target_velocity += (20 -(abs(carstate.speed_y)*KMH_PER_MPS*2))
+
             else:
                 if (self.brake_begin_consumed == False) :
                     self.target_velocity = current_velocity_kmh - 20
@@ -115,8 +120,8 @@ class Driver:
             self.brake_begin_consumed = False
             self.target_velocity = 250
 
-        if self.target_velocity < 65:
-            self.target_velocity = 65;
+        if self.target_velocity < 70:
+            self.target_velocity = 70;
 
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
@@ -156,7 +161,7 @@ class Driver:
 
         #if (command.brake > 0.0):
         #_logger.info('accelerator: {}'.format(command.accelerator))
-        _logger.info('break: {}'.format(self.breaking))
+        #_logger.info('break: {}'.format(self.breaking))
         _logger.info('target velocity: {}'.format(self.target_velocity))
         _logger.info('current speed: {}'.format(carstate.speed_x * KMH_PER_MPS))
 
