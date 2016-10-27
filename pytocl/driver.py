@@ -103,6 +103,13 @@ class Driver:
 
         command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
 
+        if abs(command.steering) < 0.1:
+            K_acc = 1
+            K_brake = 1
+        else:
+            K_acc = 0.5
+            K_brake = 1
+
         #tar_speed = self.calc_target_speed(carstate)
         #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
 
