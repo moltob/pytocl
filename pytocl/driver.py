@@ -85,6 +85,7 @@ class Driver:
         self.timeMsec = 0
         self.curves = list()
         self.speedSetPoint = 0.0
+        
 
         c0 = Curve(100, 150, 150)
         self.curves.append(c0)
@@ -104,7 +105,7 @@ class Driver:
         c4 = Curve(1450, 1500, 145)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 110)
+        c5 = Curve(1880, 1940, 120)
         self.curves.append(c5)
 
         c6pre = Curve(2300, 2350, 150)
@@ -116,7 +117,7 @@ class Driver:
         c6 = Curve(2400, 2500, 70)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2650, 120)
+        c7 = Curve(2600, 2650, 125)
         self.curves.append(c7)
 
         c8 = Curve(2900, 2950, 140)
