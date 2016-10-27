@@ -57,21 +57,29 @@ class Driver:
     def select_steering(self, carstate: State, command: Command):
         #command.steering = (carstate.angle - carstate.distance_from_center * 0.5)
 
-        steering_angle = (carstate.angle * self.currentAngleCorr)
-
-#        angle_diff_quat = abs(self.angle_old-carstate.angle) / self.angle_old
-
-
-        if ((abs(self.angle_old-carstate.angle) < 5)):
+        if ((abs(self.angle_old-carstate.angle) < 10)):
             pass
-        elif (self.angle_old < carstate.angle and self.currentAngleCorr < 1):
+        elif (self.angle_old < carstate.angle and self.currentAngleCorr < 0.9):
             self.currentAngleCorr = self.currentAngleCorr + 0.1#*(angle_diff_quat)
         elif (self.angle_old > carstate.angle and self.currentAngleCorr > 0.3):
             self.currentAngleCorr = self.currentAngleCorr - 0.1#*(angle_diff_quat)
 
+        if ((abs(self.angle_old-carstate.angle) < 10)):
+            pass
+        elif (carstate.distance_from_center > 0.1 and self.currentAngleCorr < 0.9):
+            self.currentAngleCorr += 0.1
+        elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > 0.3):
+            self.currentAngleCorr -= 0.1
+
+        print ((abs(self.angle_old - carstate.angle)))
+        print (self.angle_old)
+        print (carstate.angle)
+        print (self.currentAngleCorr)
+        print ("-----")
+
         self.angle_old = carstate.angle
 
-        command.steering = (steering_angle)
+        command.steering = (carstate.angle * self.currentAngleCorr)
 
     def select_acceleration(self, carstate: State, command: Command):
 
