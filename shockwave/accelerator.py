@@ -10,7 +10,7 @@ class Accelerator:
 
     def get_acceleration(self, state: State):
         desired_speed = self.plan.get_desired_speed()
-        acceleration = self.pid.get_acceleration(state.speed_x - desired_speed)
+        acceleration = self.pid.get_action(state.speed_x - desired_speed)
         if acceleration > 1:
             acceleration = 1
         elif acceleration < -1:

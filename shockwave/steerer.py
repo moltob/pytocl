@@ -13,7 +13,7 @@ class Steerer:
         self.angle = 0
 
     def get_steering_angle(self, state: State):
-        self.angle = self.pid.get_steering(state.distance_from_center - self.plan.get_desired_position())
+        self.angle = self.pid.get_action(state.distance_from_center - self.plan.get_desired_position())
         if self.angle > 1:
             self.angle = 1
         elif self.angle < -1:

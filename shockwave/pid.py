@@ -4,7 +4,7 @@ class PID:
         self.last_e = None
         self.last_es = []
 
-    def get_steering(self, e):
+    def get_action(self, e):
         if self.last_e is None:
             self.last_e = e
 
