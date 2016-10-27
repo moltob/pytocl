@@ -28,7 +28,7 @@ class Lane:
                 max_dist = carstate.distances_from_edge[i]
                 max_idx = i
 
-        self.vel = max_dist * 0,75
+        self.vel = max_dist * 0.75
         self.ang = angles[max_idx]
 
 
