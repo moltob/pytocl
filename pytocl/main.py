@@ -17,9 +17,9 @@ def main():
 
     # switch log level:
     if args.v:
-        level = logging.DEBUG
+        level = logging.WARNING
     else:
-        level = logging.INFO
+        level = logging.WARNING
     del args.v
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)7s %(name)s %(message)s")
 
