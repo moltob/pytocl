@@ -32,6 +32,6 @@ class Gearer:
             if self.emergencyCounter > 10:
                 self.emergency = False
                 self.emergencyCounter = 0
-                self.gear = 1
+                gear = 1
 
         return gear
