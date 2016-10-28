@@ -80,7 +80,7 @@ class Driver:
     def __init__(self, logdata=True):
         #self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
         self.directions = -90, -60, -40, -25, -20, -15, -10, -5, -2, 0, 2, 5, 10, 15, 20, 25, 40, 60, 90
-        self.currentDriveState = DriveStateStraight(-0.8)
+        self.currentDriveState = DriveStateStraight(-0.3)
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
 
@@ -93,10 +93,10 @@ class Driver:
         self.currentCurveIndex = 0
         
 
-        #c0 = Curve(100, 120,  150, 250, 0.8)
-        #self.curves.append(c0)
+        c0 = Curve(150, 155, 230  , 250, -0.3)
+        self.curves.append(c0)
 
-        c1_a = Curve(360, 380, 500, 110, -0.8)
+        c1_a = Curve(340, 380, 500, 110, -0.8)
         self.curves.append(c1_a)
 
         #c1_b = Curve(450, 500, 80)
@@ -108,7 +108,7 @@ class Driver:
         c3 = Curve(950, 980, 1100, 180, 0.8)
         self.curves.append(c3)
 
-        c4 = Curve(1430, 1450, 1600, 160, -0.8)
+        c4 = Curve(1430, 1450, 1600, 140, -0.8)
         self.curves.append(c4)
 
         c5 = Curve(1860, 1880, 1940, 200, -0.8)
@@ -123,13 +123,13 @@ class Driver:
         c6 = Curve(2400, 2415, 2500, 80, -0.8)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2630, 2800, 150, -0.8)
+        c7 = Curve(2600, 2610, 2800, 150, -0.8)
         self.curves.append(c7)
 
-        c8 = Curve(2830, 2910, 3030, 165, 0.8)
+        c8 = Curve(2830, 2910, 3030, 155, 0.8)
         self.curves.append(c8)
 
-        c9 = Curve(3200, 3230, 3285, 70, -0.8)
+        c9 = Curve(3180, 3230, 3285, 80, -0.8)
         self.curves.append(c9)
 
 
