@@ -183,13 +183,13 @@ class Driver:
 
     def overtake_opponent (self, carstate: State, command: Command):
 
-        opponent_detection_front = 0
+        opponent_detection_front = -1
         opponent_detection_left = 0
         opponent_detection_right = 0
 
         #is opponent in front of us
         for i in [17, 18, 19]:
-            if ((carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i])) or (opponent_detection_front == 0)):
+            if ((carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i])) or (opponent_detection_front == -1)):
                 opponent_detection_front = carstate.opponents[i]
 
         for i in [14, 15, 16]:
@@ -201,14 +201,14 @@ class Driver:
                 opponent_detection_right = carstate.opponents[i]
 
 
-        if (opponent_detection_front > 0 and (opponent_detection_left > 20 or opponent_detection_right > 20)):
+        if (opponent_detection_front > -1 and (opponent_detection_left > 20 or opponent_detection_right > 20)):
 
             if (opponent_detection_left > opponent_detection_right):
-                command.steering += 0.3
+                command.steering += 0.45
                 command.steering = min(1, command.steering)
                 print("LEFT")
             else:
-                command.steering -= 0.3
+                command.steering -= 0.45
                 command.steering = max(-1, command.steering)
                 print("RIGHT")
 
