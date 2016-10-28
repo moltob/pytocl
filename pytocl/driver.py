@@ -55,7 +55,7 @@ class Driver:
         During regular execution, a 19-valued vector of track distances in these directions is
         returned in ``state.State.tracks``.
         """
-        return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
+        return self.directions#-90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
 
     def on_shutdown(self):
         """Server requested driver shutdown.
@@ -158,19 +158,33 @@ class Driver:
 
         #Track planing:
         maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
-        if(maxDistance != -1 and abs(carstate.angle)<90):
-            angleAheadFree = - self.directions[maxDistanceIndex]
+        angleAheadFree = - self.directions[maxDistanceIndex]
+
+        if((distFromCenter <1) or ( maxDistance != -1 and abs(carstate.angle)<90 and (abs(angleAheadFree)>abs(carstate.angle) or abs(carstate.angle) < 8))):
+            currentAngle = - self.directions[maxDistanceIndex]
             distCenterKp = 0
             distCenterKd = 0
             distCenterKi = 0
         else:
-            angleAheadFree = carstate.angle
+            currentAngle = carstate.angle
 
+        if(distCenterKp == 0):
+            print('curve ahead')
+        else:
+            print('curve angle')
 
-        printMaxDistanceAhead = 1
+        printMaxDistanceAhead = 0
         if (printMaxDistanceAhead):
             if(maxDistance != -1):
-                print('maxDistance' + str(maxDistance) + '\t angle: ' + str(self.directions[maxDistanceIndex]))
+                print('maxDistance' + str(maxDistance) + '\t angle: ' + str(angleAheadFree))
+
+        #self.currentState = 'straight ahead'
+        #if(angleAheadFree < 5):
+        #    self.currentState = 'straight ahead'
+        #else:
+        #    self.currentState = 'curve'
+        #print(self.currentState)
+
 
         self.timeMsec = self.timeMsec + 20
         printDistance = False
@@ -178,7 +192,8 @@ class Driver:
             printDistance = True
 
         if(printDistance):
-            print("DISTANCE = " + str(trackDistance))
+            pass
+            #print("DISTANCE = " + str(trackDistance))
 
         trackPos_SetPoint = 0.0
         angle_SetPoint = 0.0
@@ -202,14 +217,17 @@ class Driver:
         speed_SetPoint_ms = speed_SetPoint_kmh * MPS_PER_KMH
         self.speedSetPoint = speed_SetPoint_ms
         cmdDistCenter = self.pidDistCenter.calc(trackPos_SetPoint, distFromCenter, self.dt, distCenterKp, distCenterKd, distCenterKi)
-        cmdAngle = self.pidAngle.calc(angle_SetPoint, angleAheadFree, self.dt, angleKp, angleKd, angleKi)
+        cmdAngle = self.pidAngle.calc(angle_SetPoint, currentAngle, self.dt, angleKp, angleKd, angleKi)
         cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, speedKp, speedKd, speedKi)
 
         command.steering = -cmdAngle  + cmdDistCenter
         command.accelerator = 0.0
         command.brake = 0.0
         if(cmdAccelerator > 0.0):
-            command.accelerator = cmdAccelerator
+            if(abs(carstate.distance_from_center)>1): #sind wir im Kiesbett?
+                command.accelerator = 0.2
+            else:
+                command.accelerator = cmdAccelerator
         else:
             command.brake = -cmdAccelerator
 
@@ -217,9 +235,10 @@ class Driver:
         min_wheel_speed = min(carstate.wheel_velocities)
         #print('WHEEL_SPEED=' + str(min_wheel_speed))
 
-        if(command.brake > 0.0 and min_wheel_speed < 1000):
+        if(command.brake > 0.0 and min_wheel_speed < 500):
+            #pass
             print('!!!!!!! ABS')
-            #command.brake = 0.0
+            command.brake = 0.2
 
         if(command.brake == 0.0 and command.accelerator > 0.0 and command.accelerator < 1.0):
             command.accelerator = 1.0
