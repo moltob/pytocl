@@ -40,7 +40,7 @@ class Driver:
         self.speedlist.add(405, 95)
         self.speedlist.add(450, 100)
         self.speedlist.add(505, 130)
-        self.speedlist.add(520, 160)
+        self.speedlist.add(520, 170)
         self.speedlist.add(700, 120)
         self.speedlist.add(720, 100)
         self.speedlist.add(730, 100)
@@ -53,7 +53,7 @@ class Driver:
         self.speedlist.add(1020, 150)
         self.speedlist.add(1050, 180)
         self.speedlist.add(1200, 160)
-        self.speedlist.add(1250, 190)
+        self.speedlist.add(1250, 200)
         self.speedlist.add(1430, 150)
         self.speedlist.add(1450, 130)
         self.speedlist.add(1470, 120)
@@ -64,30 +64,32 @@ class Driver:
         self.speedlist.add(1880, 140)
         self.speedlist.add(1890, 120)
         self.speedlist.add(1900, 110)
-        self.speedlist.add(1905, 90)
+        self.speedlist.add(1905, 95)
         self.speedlist.add(1940, 95)
         self.speedlist.add(1950, 150)
         self.speedlist.add(2020, 130)
-        self.speedlist.add(2030, 180)
+        self.speedlist.add(2030, 190)
         self.speedlist.add(2300, 160)
         self.speedlist.add(2320, 140)
         self.speedlist.add(2400, 80)
-        self.speedlist.add(2430, 55)
-        self.speedlist.add(2460, 45)
+        self.speedlist.add(2430, 65)
+        self.speedlist.add(2460, 55)
         self.speedlist.add(2490, 90)
         self.speedlist.add(2500, 130)
-        self.speedlist.add(2590, 150)
-        self.speedlist.add(2650, 130)
+        self.speedlist.add(2590, 170)
+        self.speedlist.add(2650, 135)
         self.speedlist.add(2750, 210)
         self.speedlist.add(2800, 180)
         self.speedlist.add(2850, 150)
-        self.speedlist.add(2880, 120)
-        self.speedlist.add(2900, 110)
+        self.speedlist.add(2880, 130)
+        self.speedlist.add(2900, 120)
         self.speedlist.add(3010, 210)
+        self.speedlist.add(3180, 150)
         self.speedlist.add(3200, 110)
-        self.speedlist.add(3220, 90)
-        self.speedlist.add(3250, 70)
-        self.speedlist.add(3290,200)
+        self.speedlist.add(3210, 80)
+        self.speedlist.add(3250, 65)
+        self.speedlist.add(3290,150)
+        self.speedlist.add(3320,200)
         self.speedlist.add(3580,160)
 
 
@@ -120,7 +122,7 @@ class Driver:
         """
 
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        return self.controlCar(carstate, tar_speed, 0.5, 20, 0.5, 20)
+        return self.controlCar(carstate, tar_speed, 0.5, 5, 0.5, 25)
 
     def controlCar(self, carstate: State, tar_speed, K_acc, T_acc, K_brake, T_brake) -> Command:
         """basic function to control car on street"""
@@ -130,10 +132,14 @@ class Driver:
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
         steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, 0)
 
-        command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
+        command.steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 3
 
         if abs(command.steering) < 0.1:
-            K_acc = 1
+            if carstate.distance_raced > 80:
+                K_acc = 1.0
+            else:
+                K_acc = 0.75
+
             K_brake = 1
         else:
             K_acc = 0.5
