@@ -41,7 +41,7 @@ class Dynamic:
         if ((speed < 0) and (speed < carstate.speed_x)):
             self.accelerator = 1
             self.gear = -1
-            print("REVERSE g %f  a%  s %f" % (self.gear,self.accelerator,carstate.speed_x))
+            print("REVERSE g %f  a%  s %f" % (self.gear, self.accelerator, carstate.speed_x))
         else:
             if (self.gear == -1): self.gear = 1
             #bremsen
@@ -94,12 +94,13 @@ class Dynamic:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
 
 
-        if carstate.rpm > 8000 and carstate.gear < 6:
-            # _logger.info('switching up')
-            self.gear = carstate.gear + 1
-        elif carstate.rpm < 2700 and carstate.gear > 1:
-            #_logger.info('switching down')
-            self.gear = carstate.gear -1
+        if carstate.gear > -1:
+            if carstate.rpm > 8000 and carstate.gear < 6:
+                # _logger.info('switching up')
+                self.gear = carstate.gear + 1
+            elif carstate.rpm < 2700 and carstate.gear > 1:
+                #_logger.info('switching down')
+                self.gear = carstate.gear -1
 
     def accelerate(self, speed, carstate : State):
         if carstate.distance_from_start < 100 or carstate.distance_from_start > 3580:
