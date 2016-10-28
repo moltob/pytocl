@@ -17,12 +17,16 @@ class Steering:
         self.control = PID(0.7, 0.05, 0, Integrator_max=1, Integrator_min=-1)
         self.track_position = CENTER
         self.orientation = [Orientation(0, LEFT),
-                            Orientation(500, RIGHT), Orientation(1270, LEFT),
+                            Orientation(500, RIGHT), Orientation(1250, LEFT),
                             Orientation(2200, RIGHT),
-                            Orientation(2400,CENTER),
+                            Orientation(2340, CENTER),
+                            # in S-Kurve
+                            Orientation(2435, CENTER),
                             Orientation(2600, LEFT),
                             Orientation(2800, RIGHT),
-                            Orientation(3100, LEFT)]
+                            Orientation(3200, LEFT),
+                            Orientation(3280, CENTER),
+                            Orientation(3560, LEFT)]
         # self.control = PID(1, 0, 0)
 
     def select_track_position(self, carstate: State):
