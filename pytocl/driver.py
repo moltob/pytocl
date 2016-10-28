@@ -68,10 +68,10 @@ class Driver:
 #        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 7000 and carstate.gear < 6:
-            _logger.info('switching up')
+#            _logger.info('switching up')
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
+#            _logger.info('switching down')
             command.gear = carstate.gear - 1
 
         if self.data_logger:
