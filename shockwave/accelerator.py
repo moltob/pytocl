@@ -1,6 +1,6 @@
 from pytocl.car import State
 from shockwave.pid import PID
-
+import math
 
 class Accelerator:
 
@@ -10,7 +10,8 @@ class Accelerator:
 
     def get_acceleration(self, state: State):
         desired_speed = self.plan.get_desired_speed()
-        acceleration = self.pid.get_action(state.speed_x - desired_speed)
+        speed = math.sqrt(state.speed_x * state.speed_x + state.speed_y * state.speed_y + state.speed_z * state.speed_z)
+        acceleration = self.pid.get_action(speed - desired_speed)
         if acceleration > 1:
             acceleration = 1
         elif acceleration < -1:

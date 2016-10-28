@@ -13,9 +13,7 @@ class Gearer:
             return 1
 
         gear = state.gear if state.gear != 0 else 1
-        if state.rpm > 9000 and state.gear < 5:
-            gear = state.gear + 2
-        elif state.rpm > 7000 and state.gear < 6:
+        if state.rpm > 9000 and state.gear < 6:
             gear = state.gear + 1
         elif state.rpm < 1000 and state.gear > 2:
             gear = state.gear - 2
