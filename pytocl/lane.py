@@ -3,7 +3,10 @@ from pytocl.analysis import DataLogWriter
 angles = [-90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90]
 
 class Lane:
-    last_ang = -1
+
+    last_dist_from_start = -1
+    backwards = False
+    backcnt = 0
     
     def __init__ (self):
         self.vel = 0
@@ -22,52 +25,55 @@ class Lane:
         """
         return -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
 
-    # def new_ang(self, angle):
-    #     print (Lane.last_ang)
-    #     print(angle)
-    #     diff = 0
-    #     new_angle = angle
-    #     if angle >= 0 and Lane.last_ang>=0:
-    #         return angle
-    #     if angle<=0 and Lane.last_ang<=0:
-    #         return angle
-    #
-    #     diff = angle - Lane.last_ang
-    #
-    #     if abs(diff) >= 10:
-    #         if diff >= 0:
-    #             new_angle= Lane.last_ang+10
-    #         else:
-    #             new_angle = Lane.last_ang - 10
-    #         print (str(diff) + "   *****************************************************************")
-    #     else:
-    #         new_angle=angle
-    #     return new_angle
-
     def lookfwd(self, carstate):
         #print ('**********************************************************************************************************')
         max_dist = 0
         max_idx = -1
-        print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
-        if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
-            self.vel = 10
-            print('***************')
-            print (carstate.distances_from_edge)
-            print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
-            if carstate.distance_from_center < 0:
-                self.ang = -45 - carstate.angle
-            else:
-                self.ang = 45 - carstate.angle
 
-            print (self.vel)
-            print (self.ang)
+        if carstate.distance_from_start < Lane.last_dist_from_start:
+            self.vel = 10
+            print(' BACKWARDS ***************')
+            print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle) + ' --- ' + str(
+                carstate.speed_x))
+            # print (carstate.distances_from_edge)
+            # print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+            if carstate.distance_from_center < 0:
+                self.ang = -30 - carstate.angle
+            else:
+                self.ang = 30 - carstate.angle
+
+            print(self.vel)
+            print(self.ang)
             return
 
-        # if carstate.distance_from_start > 100 and carstate.distance_from_start < 200:
-        #     self.ang = 30
-        #     self.vel = 150
-        #     return
+        print (Lane.backwards)
+        if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
+            if Lane.backwards == True:
+                self.ang = 0
+                self.vel = -10
+                #Lane.backcnt -= 1
+            elif carstate.speed_x < 3:
+                Lane.backwards = True
+                self.ang = 0
+                self.vel = -10
+            else:
+                self.vel = 10
+                print('***************')
+                print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle)+ ' --- ' + str(carstate.speed_x))
+                #print (carstate.distances_from_edge)
+                #print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+                if carstate.distance_from_center < 0:
+                    self.ang = -30 - carstate.angle
+                else:
+                    self.ang = 30 - carstate.angle
 
+                print (self.vel)
+                print (self.ang)
+            return
+        else:
+            print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+
+        Lane.backwards = False
 
         for i in range(0,19):
             if carstate.distances_from_edge[i] > max_dist:
@@ -75,7 +81,7 @@ class Lane:
                 max_idx = i
 
         if max_dist>150:
-            self.vel = max_dist * 300 / 200
+            self.vel = max_dist * 500 / 200
         elif max_dist > 90:
             self.vel = max_dist
         elif max_dist > 50:
