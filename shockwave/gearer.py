@@ -16,6 +16,7 @@ class Gearer:
 
         gear = state.gear if state.gear != 0 else 1
         if state.rpm > 9000 and state.gear < 6:
+            self.emergency = False
             gear = state.gear + 1
         elif state.rpm < 1000 and state.gear > 2:
             gear = state.gear - 2
