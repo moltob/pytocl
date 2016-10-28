@@ -33,7 +33,39 @@ class TrajectoryPlanner:
                 trackLimitCoordinatesY.append(-1 * measurement * math.sin(self.rangeFinderAngles[index] / 180 * math.pi))
         return offroad, trackLimitCoordinatesX, trackLimitCoordinatesY
 
-    def get_Target(self, trackLimitCoordinatesX, trackLimitCoordinatesY):
+    def get_target_from_largest_distance(self, carstate):
+        leftDistanceIndex = 0
+        rightDistanceIndex = self.NULL_INDEX
+        leftDistanceMax = 0
+        rightDistanceMax = 0
+        for index, measurement in enumerate(carstate.distances_from_edge):
+            if measurement > -1:
+                if index <= self.NULL_INDEX:
+                    if carstate.distances_from_edge[index] > leftDistanceMax:
+                        leftDistanceIndex = index
+                        leftDistanceMax = carstate.distances_from_edge[index]
+                if index >= self.NULL_INDEX:
+                    if carstate.distances_from_edge[index] > rightDistanceMax:
+                        rightDistanceIndex = index
+                        rightDistanceMax = carstate.distances_from_edge[index]
+
+        # Convert to Cartesian coordinates
+        leftTrackBorderX = carstate.distances_from_edge[leftDistanceIndex] * math.cos(self.rangeFinderAngles[leftDistanceIndex] / 180 * math.pi)
+        rightTrackBorderX = carstate.distances_from_edge[rightDistanceIndex] * math.cos(self.rangeFinderAngles[rightDistanceIndex] / 180 * math.pi)
+        leftTrackBorderY = -1 * carstate.distances_from_edge[leftDistanceIndex] * math.sin(self.rangeFinderAngles[leftDistanceIndex] / 180 * math.pi)
+        rightTrackBorderY = -1 * carstate.distances_from_edge[rightDistanceIndex] * math.sin(self.rangeFinderAngles[rightDistanceIndex] / 180 * math.pi)
+
+        targetX = (rightTrackBorderX + leftTrackBorderX) / 2
+        targetY = (leftTrackBorderY + rightTrackBorderY) / 2
+
+        print(rightTrackBorderY, rightTrackBorderX, leftTrackBorderX, leftTrackBorderY)
+        print(targetX, targetY)
+        print(carstate.distances_from_edge[leftDistanceIndex], carstate.distances_from_edge[rightDistanceIndex])
+        print(carstate.distances_from_edge)
+
+        return targetX, targetY
+
+    def get_target_from_largest_x_coordinates(self, trackLimitCoordinatesX, trackLimitCoordinatesY):
         leftTrackBorderX = 0
         leftTrackBorderY = 0
         rightTrackBorderX = 0
@@ -69,11 +101,11 @@ class TrajectoryPlanner:
         TRACK_WIDTH = 12
         if rightCurve:
             targetX -= TRACK_WIDTH * 2
-            if targetX > 50:
+            if targetX > 80:
                 targetY += TRACK_WIDTH / 4 - (carstate.distance_from_center * TRACK_WIDTH)
         if leftCurve:
             targetX -= TRACK_WIDTH * 2
-            if targetX > 50:
+            if targetX > 80:
                 targetY += TRACK_WIDTH / 4 - (carstate.distance_from_center * TRACK_WIDTH)
         return targetX, targetY
 
@@ -83,31 +115,32 @@ class TrajectoryPlanner:
         averageAngle = sum(self.anglesAverage) / len(self.anglesAverage)
         return averageAngle
 
-    def get_offroad_target(self, angle, carstate, distance, offroad):
-        if (offroad):
-            CORRECTION_ANGLE = -5
-            CORRECTION_DISTANCE = 10
-            distance = CORRECTION_DISTANCE
-            if carstate.distance_from_center <= -1:  # Right track border
-                if carstate.angle == 0:
-                    angle = CORRECTION_ANGLE
-                elif carstate.angle > 90 or carstate.angle < -90:
-                    angle = 0
-                    # TODO
-                elif carstate.angle > 0:
-                    angle = -carstate.angle
-                else:
-                    angle = carstate.angle
-            elif carstate.distance_from_center >= 1:  # Left track border
-                if carstate.angle == 0:
-                    angle = -CORRECTION_ANGLE
-                elif carstate.angle > 90 or carstate.angle < -90:
-                    angle = 0
-                    # TODO
-                elif carstate.angle > 0:
-                    angle = carstate.angle
-                else:
-                    angle = -carstate.angle
+    def get_offroad_target(self, carstate):
+        angle = 0
+        distance = 0
+        CORRECTION_ANGLE = -5
+        CORRECTION_DISTANCE = 10
+        distance = CORRECTION_DISTANCE
+        if carstate.distance_from_center <= -1:  # Right track border
+            if carstate.angle == 0:
+                angle = CORRECTION_ANGLE
+            elif carstate.angle > 90 or carstate.angle < -90:
+                angle = 0
+                # TODO
+            elif carstate.angle > 0:
+                angle = -carstate.angle
+            else:
+                angle = carstate.angle
+        elif carstate.distance_from_center >= 1:  # Left track border
+            if carstate.angle == 0:
+                angle = -CORRECTION_ANGLE
+            elif carstate.angle > 90 or carstate.angle < -90:
+                angle = 0
+                # TODO
+            elif carstate.angle > 0:
+                angle = carstate.angle
+            else:
+                angle = -carstate.angle
         return angle, distance
 
     def get_angle_distance_from_target_coordinates(self, targetX, targetY):
@@ -121,15 +154,17 @@ class TrajectoryPlanner:
 
     def update(self, carstate: State) -> Coordinate:
         offroad, trackLimitCoordinatesX, trackLimitCoordinatesY = self.get_track_limit_coordinates(carstate)
-        targetX, targetY = self.get_Target(trackLimitCoordinatesX, trackLimitCoordinatesY)
+        targetX, targetY = self.get_target_from_largest_x_coordinates(trackLimitCoordinatesX, trackLimitCoordinatesY)
+        targetX, targetY = self.get_target_from_largest_distance(carstate)
         leftCurve, rightCurve = self.curve_Detection(carstate)
         #targetX, targetY = self.get_curve_corrected_target(carstate, leftCurve, rightCurve, targetX, targetY)
         angle, distance = self.get_angle_distance_from_target_coordinates(targetX, targetY)
-        angle, distance = self.get_offroad_target(angle, carstate, distance, offroad)
+        if offroad:
+            angle, distance = self.get_offroad_target(carstate)
         averageAngle = self.get_average_angle(angle)
 
         # Debug messages
-        print(offroad, carstate.angle, distance, angle, averageAngle)
+        #print(offroad, carstate.angle, distance, angle, averageAngle)
         #print(carstate.distances_from_edge)
         #print(trackLimitCoordinatesX)
         #print(trackLimitCoordinatesY)
@@ -138,8 +173,7 @@ class TrajectoryPlanner:
         #print(distance, angle)
         if leftCurve or rightCurve:
             print('########################')
-            print(leftCurve, rightCurve)
+            print(leftCurve, rightCurve, targetX)
             print('########################')
-
 
         return Coordinate(distance, averageAngle)
