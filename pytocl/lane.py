@@ -61,7 +61,7 @@ class Lane:
                 print('***************')
                 print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle)+ ' --- ' + str(carstate.speed_x))
                 #print (carstate.distances_from_edge)
-                #print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+                print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
                 if carstate.distance_from_center < 0:
                     self.ang = -30 - carstate.angle
                 else:
