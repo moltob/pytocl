@@ -27,7 +27,7 @@ class Driver:
         self.emergency_controller = EmergencyController()
 
 
-@property
+    @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
 
