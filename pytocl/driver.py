@@ -61,39 +61,39 @@ class Driver:
         # basic acceleration to target speed:
         targetAcceleration = self.accelerator.update(carstate)
         if targetAcceleration < 0:
-            if self.wheel_spin.slipFactor(carstate) <= 0.001:
+            if self.wheel_spin.slipFactor(carstate) <= 0:
                 command.brake = min(-targetAcceleration * 0.4, 1)
             else:
-                command.brake = min(-targetAcceleration * 0.4, 1)
+                command.brake = min(-targetAcceleration * 0.2, 1)
             command.accelerator = 0.0
         else:
-            if self.wheel_spin.slipFactor(carstate) <= 0.001:
+            if self.wheel_spin.slipFactor(carstate) <= 0:
                 command.accelerator = min(targetAcceleration, 1)
             else:
-                command.accelerator = targetAcceleration
+                command.accelerator = min(targetAcceleration, 1)
             command.brake = 0.0
 
         #_logger.info('accelerator: {}'.format(command.accelerator))
         #_logger.info('brake: {}'.format(command.brake))
         #_logger.info('current velocity: {}'.format(carstate.speed_x))
-        _logger.info('distance_from_start: {}, {}, {}, {}'.format(
-            carstate.distance_from_start,
-            self.wheel_spin.slipFactor(carstate),
-            carstate.wheel_velocities[0] + carstate.wheel_velocities[1],
-            carstate.wheel_velocities[2] + carstate.wheel_velocities[3]
-        ))
+        # _logger.info('distance_from_start: {}, {}, {}, {}'.format(
+        #    carstate.distance_from_start,
+        #    self.wheel_spin.slipFactor(carstate),
+        #    carstate.wheel_velocities[0] + carstate.wheel_velocities[1],
+        #    carstate.wheel_velocities[2] + carstate.wheel_velocities[3]
+        #))
 
         # gear shifting:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 9500 and carstate.gear < 6:
-            _logger.info('switching up')
+            #_logger.info('switching up')
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2000 and carstate.gear > 1:
-            _logger.info('switching down')
+            #_logger.info('switching down')
             command.gear = carstate.gear - 1
 
-        if self.data_logger:
-            self.data_logger.log(carstate, command)
+        #if self.data_logger:
+        #    self.data_logger.log(carstate, command)
 
         return command

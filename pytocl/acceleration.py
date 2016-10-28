@@ -19,7 +19,7 @@ class Acceleration:
             TrackParameter(500, MAX_VELOCITY_MS),
             TrackParameter(700, 28), TrackParameter(750, MAX_VELOCITY_MS),
             TrackParameter(970, 35), TrackParameter(1000, MAX_VELOCITY_MS),
-            TrackParameter(1440, 30), TrackParameter(1500, MAX_VELOCITY_MS),
+            TrackParameter(1440, 38), TrackParameter(1500, MAX_VELOCITY_MS),
             TrackParameter(1870, 33), TrackParameter(1930, MAX_VELOCITY_MS),
             #Schikane
             TrackParameter(2320, 55), TrackParameter(2330, 40),
