@@ -19,13 +19,6 @@ class Area(Enum):
 
 class Opponents:
     def __init__(self):
-        self.car_ahead = False
-        self.left_ahead_diff = 0
-        self.right_ahead_diff = 0
-        self.overtake_left = False
-        self.overtake_right = False
-        self.left_ahead_dist = 0
-        self.right_ahead_dist = 0
         self.opponents_diff = []
         self.opponents = []
 
