@@ -118,7 +118,7 @@ class Driver:
 
         elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
             self.brake_begin_consumed = False
-            self.target_velocity = 250
+            self.target_velocity = 100
 
         if self.target_velocity < 70:
             self.target_velocity = 70;
@@ -126,10 +126,39 @@ class Driver:
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
 
+    def show_opponents (self, carstate: State, command: Command):
+
+        for i in [0, 1, 2, 3, 4, 5, 6, 30, 31, 32, 33, 34, 35]:
+            if (carstate.opponents[i] < 190):
+                print (str(i) + ": "+ str(carstate.opponents[i]))
+
+        opponent_detection_left = 0
+        opponent_detection_right = 0
+
+        for i in [0, 1, 2, 3, 4, 5, 6]:
+            if ((carstate.opponents[i] < 20) and (opponent_detection_left > carstate.opponents[i])):
+                opponent_detection_left = carstate.opponents[i]
+
+        for i in [30, 31, 32, 33, 34, 35]:
+            if ((carstate.opponents[i] < 20) and (opponent_detection_right > carstate.opponents[i])):
+                opponent_detection_right = carstate.opponents[i]
+
+        if (opponent_detection_left < 20 or  opponent_detection_right < 20):
+
+            if (opponent_detection_left > opponent_detection_right):
+                command.steering += 0.2
+                command.steering = min (1, command.steering)
+                print ("LEFT")
+            else:
+                command.steering -= 0.2
+                command.steering = max(-1, command.steering)
+                print("RIGHT")
+
     def select_steering(self, carstate: State, command: Command):
 
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
+        self.show_opponents (carstate, command)
 
 
     def select_acceleration(self, carstate: State, command: Command):
