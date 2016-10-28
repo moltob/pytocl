@@ -165,9 +165,12 @@ class Driver:
         #else:
         #    self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
 
+        self.oponents.update(carstate)
         distanceToFront = self.oponents.dist_to_car(Area.FRONT)
 
-        if distanceToFront > 0:
+        if distanceToFront == 200:
+            self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
+        else:
             self.driveMode = DriveModeStates.DRIVEMODE_FOLLOW
 
         if self.driveMode == DriveModeStates.DRIVEMODE_STARTUP:
