@@ -16,6 +16,7 @@ class Steering:
     def __init__(self):
         self.control = PID(0.7, 0.05, 0, Integrator_max=1, Integrator_min=-1)
         self.track_position = CENTER
+        self.time = 0
         self.orientation = [Orientation(0, LEFT),
                             Orientation(500, RIGHT), Orientation(1250, LEFT),
                             Orientation(2200, RIGHT),
@@ -48,7 +49,9 @@ class Steering:
             distance_error = carstate.distance_from_center * 4
 
         deltaAngle = max(min(0.8, (carstate.angle / 10.0) - distance_error * 0.1), -0.8)
-        return self.control.update(deltaAngle)
+        dt = carstate.current_lap_time - self.time
+        self.time = carstate.current_lap_time
+        return self.control.update(deltaAngle, dt / 0.02)
 
 # import math
 # math.radiand(grad)

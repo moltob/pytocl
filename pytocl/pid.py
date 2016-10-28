@@ -34,15 +34,15 @@ class PID:
         self.set_point = 0.0
         self.error = 0.0
 
-    def update(self, error):
+    def update(self, error, dt = 1.0):
         """
         Calculate PID output value for given reference input and feedback
         """
 
         self.error = error
 
-        self.P_value = self.Kp * error
-        self.D_value = self.Kd * (error - self.Derivator)
+        self.P_value = (self.Kp/dt) * error
+        self.D_value = (self.Kd/dt) * (error - self.Derivator)
         self.Derivator = error
 
         self.Integrator = self.Integrator + error
@@ -52,7 +52,7 @@ class PID:
         elif self.Integrator < self.Integrator_min:
             self.Integrator = self.Integrator_min
 
-        self.I_value = self.Integrator * self.Ki
+        self.I_value = self.Integrator * (self.Ki/dt)
 
         PID = self.P_value + self.I_value + self.D_value
 
