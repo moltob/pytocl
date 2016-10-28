@@ -15,16 +15,25 @@ class Side(Enum):
 
 class StrategyController:
     def __init__(self):
+        self.speed = 0
+        self.target_pos = 0
         self.m_p1 = 0
         self.m_p2 = 0
         self.m_p3 = 0
 
     def control(self, carstate: State, custom_data: CustomData):
-        strategy_speed, strategy_target_pos = self.control_speed(carstate, custom_data)
-        speed = strategy_speed
-        target_pos = strategy_target_pos
+        self.speed, self.target_pos = self.control_speed(carstate, custom_data)
 
-        return speed, target_pos
+        if carstate.distance_raced < 50:
+            self.speed = 600
+            self.target_pos = 0.5
+        elif carstate.distance_raced < 220:
+            self.speed = 600
+            self.target_pos = 0.3
+        elif carstate.distance_raced < 580:
+            self.target_pos = 0.4
+
+        return self.speed, self.target_pos
 
     def control_speed(self, carstate: State, custom_data: CustomData):
         cshape = self.detect_curve(carstate, 90)

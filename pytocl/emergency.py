@@ -29,7 +29,7 @@ class EmergencyController:
             else:
                 self.stuck_time = 0
 
-            if self.stuck_time > 200:
+            if self.stuck_time > 500:
                 self.emergency_active = True
                 self.emergency_time = 0
                 self.stuck_time = 0
