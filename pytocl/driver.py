@@ -180,6 +180,29 @@ class Driver:
                     command.steering = min (1, command.steering)
                     print ("LEFT")
 
+        opponent_detection_left = -1
+        opponent_detection_right = -1
+
+        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_left > carstate.opponents[i]) or (opponent_detection_left == -1)) ):
+                opponent_detection_left = carstate.opponents[i]
+
+        for i in [28, 29, 30, 31, 32, 33, 34, 35]:
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i]) or (opponent_detection_right == -1)) ):
+                opponent_detection_right = carstate.opponents[i]
+
+        if ( (opponent_detection_left < 20 and opponent_detection_left > -1) or
+                 (opponent_detection_right < 20 and opponent_detection_right > -1)):
+
+            if (opponent_detection_left < opponent_detection_right):
+                command.steering -= 0.3
+                command.steering = max(-1, command.steering)
+#                print("RIGHT")
+            else:
+                command.steering += 0.3
+                command.steering = min (1, command.steering)
+ #               print ("LEFT")
+
 
     def overtake_opponent (self, carstate: State, command: Command):
 
@@ -189,19 +212,27 @@ class Driver:
 
         #is opponent in front of us
         for i in [17, 18, 19]:
-            if ((carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i])) or (opponent_detection_front == -1)):
+            print (carstate.opponents[i])
+            if ( (carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i]) or (opponent_detection_front < 0)) ):
                 opponent_detection_front = carstate.opponents[i]
 
         for i in [14, 15, 16]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i])) or (opponent_detection_right == 0)):
-                opponent_detection_right = carstate.opponents[i]
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_left > carstate.opponents[i]) or (opponent_detection_left == 0)) ):
+                opponent_detection_left = carstate.opponents[i]
 
         for i in [20, 21, 22]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i])) or (opponent_detection_right == 0)):
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i]) or (opponent_detection_right == 0)) ):
                 opponent_detection_right = carstate.opponents[i]
+
+        print ("Hallo")
+        print (opponent_detection_front)
+        print (opponent_detection_left)
+        print (opponent_detection_right)
 
 
         if (opponent_detection_front > -1 and (opponent_detection_left > 20 or opponent_detection_right > 20)):
+
+            print ("opponent detected")
 
             if (opponent_detection_left > opponent_detection_right):
                 command.steering += 0.45
@@ -218,7 +249,7 @@ class Driver:
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
         self.control_opponents_backwards (carstate, command)
-        self.overtake_opponent(carstate, command)
+    #    self.overtake_opponent(carstate, command)
 
     def checkOutsideTrack(self, carstate: State, command: Command):
         self.outside_track = False
