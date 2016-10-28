@@ -18,18 +18,18 @@ class VehicleControl2:
 
     def calc_lenkwinkel(self, target: Coordinate, carstate: State):
         self.steering = target.angle
-        self.steering = VehicleControl.saturate(self.steering, -180, 180)
+        self.steering = VehicleControl2.saturate(self.steering, -180, 180)
 
     def mock_lenkwinkel(self, carstate):
         return (carstate.angle - carstate.distance_from_center * 0.5)
 
     def calc_accelerator(self, target: Coordinate, carstate: State):
         # basic acceleration to target speed:
-        if carstate.speed_x < 30 * MPS_PER_KMH:
-            self.accelerator += 0.01
+        if carstate.speed_x < 27 * MPS_PER_KMH:
+            self.accelerator += 0.001
         else:
             accelerator = 0
-        self.accelerator = VehicleControl.saturate(self.accelerator, 0, 0.5)
+        self.accelerator = VehicleControl2.saturate(self.accelerator, 0, 0.5)
 
     def calc_gear(self, target: Coordinate, carstate: State):
         self.gear = carstate.gear or 1
