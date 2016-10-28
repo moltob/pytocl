@@ -24,6 +24,7 @@ class DriveModeStates(Enum):
     DRIVEMODE_NORMAL=1
     DRIVEMODE_OVERTAKE = 2
     DRIVEMODE_FOLLOW = 3
+    DRIVEMODE_RECOVER = 4
 
 class Driver:
     """Driving logic.
@@ -161,9 +162,9 @@ class Driver:
         # check which drive mode to choose
         bCanOvertake, distanceToGo, brakedist = self.overtakelist.canOvertake(carstate.distance_from_start)
         if carstate.distance_from_center > 1.3 or carstate.distance_from_center <-1.3:
-            self.driveMode = 2
-        elif self.driveMode == 2:
-            self.driveMode = 1
+            self.driveMode = DriveModeStates.DRIVEMODE_RECOVER
+        elif self.driveMode == DriveModeStates.DRIVEMODE_RECOVER:
+            self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
 
         #if bCanOvertake:
         #    self.driveMode = DriveModeStates.DRIVEMODE_OVERTAKE
@@ -194,6 +195,8 @@ class Driver:
             command = self.overtakeDrive(carstate)
         elif self.driveMode == DriveModeStates.DRIVEMODE_FOLLOW:
             command = self.followDrive(carstate)
+        elif  self.driveMode == DriveModeStates.DRIVEMODE_RECOVER:
+            command = self.recoverDrive(carstate)
         _logger.info('driveMode: {}'.format(self.driveMode))
         _logger.info('distanceToFront: {}'.format(distanceToFront))
         return command
