@@ -188,26 +188,25 @@ class Driver:
         opponent_detection_right = 0
 
         #is opponent in front of us
-        for i in [17, 18, 19]:
-            print (carstate.opponents[i])
+        for i in [16, 17, 18]:
+            print (str(i) + ":" + str(carstate.opponents[i]))
             if ( (carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i]) or (opponent_detection_front < 0)) ):
                 opponent_detection_front = carstate.opponents[i]
 
-        for i in [14, 15, 16]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_left > carstate.opponents[i]) or (opponent_detection_left == 0)) ):
+        for i in [12, 13, 14, 15]:
+            if ((opponent_detection_left > carstate.opponents[i]) or (opponent_detection_left == 0)):
                 opponent_detection_left = carstate.opponents[i]
 
-        for i in [20, 21, 22]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i]) or (opponent_detection_right == 0)) ):
+        for i in [19, 20, 21, 22]:
+            if ((opponent_detection_right > carstate.opponents[i]) or (opponent_detection_right == 0) ):
                 opponent_detection_right = carstate.opponents[i]
 
-        print ("Hallo")
         print (opponent_detection_front)
         print (opponent_detection_left)
         print (opponent_detection_right)
 
 
-        if (opponent_detection_front > -1 and (opponent_detection_left > 20 or opponent_detection_right > 20)):
+        if (opponent_detection_front > -1 and (opponent_detection_left > opponent_detection_front or opponent_detection_right > opponent_detection_front)):
 
             print ("opponent detected")
 
@@ -226,7 +225,7 @@ class Driver:
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
         self.control_opponents_backwards (carstate, command)
-    #    self.overtake_opponent(carstate, command)
+        self.overtake_opponent(carstate, command)
 
     def checkOutsideTrack(self, carstate: State, command: Command):
         self.outside_track = False
