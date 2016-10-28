@@ -34,13 +34,16 @@ class Dynamic:
 
         dSpeed = speed - carstate.speed_x
 
-        limit_high = 10
+        limit_high = 15
         limit_mid  = 80
 
         brake_high = 0.8
-        brake_mid = 0.7
+        brake_mid = 0.6
         brake_low = 0.4
-        brake_steps = 0.2
+        brake_steps_high = 0.5
+        brake_steps_mid  = 0.3
+        brake_steps_low = 0.1
+
 
         #bremsen
         if (dSpeed < 0):
@@ -48,17 +51,17 @@ class Dynamic:
         # hart bremsen
             if (dSpeedFactor < limit_high):
                 if self.brake <= brake_high:
-                    self.brake += brake_steps
+                    self.brake += brake_steps_high
                     print("BRAKE HARD: " + str(self.brake))
         # mittel
             elif (dSpeedFactor >= limit_high) and (dSpeedFactor < limit_mid):
                 if self.brake <= brake_mid:
-                    self.brake += brake_steps
+                    self.brake += brake_steps_mid
                     print("BRAKE MID: " + str(self.brake))
         # sanft bremsen
             elif (dSpeedFactor >= limit_mid) and (dSpeedFactor <95):
                 if self.brake <= brake_low:
-                    self.brake += brake_steps
+                    self.brake += brake_steps_low
                     print("BRAKE LIGHT: " + str(self.brake))
             #else :
                 #print("BRAKE NO")
