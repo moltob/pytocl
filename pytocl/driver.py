@@ -122,7 +122,8 @@ class Driver:
 
     def createOvertakeList(self):
         #self.overtakelist.add(0.5, 0, 250)
-        self.overtakelist.add(0.5, 1550, 1900)
+        self.overtakelist.add(0.5, 1550, 1900, 100)
+        self.overtakelist.add(0.5, 3200, 3600, 0)
 
     @property
     def range_finder_angles(self):
