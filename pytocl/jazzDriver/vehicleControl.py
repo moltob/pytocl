@@ -80,23 +80,27 @@ class VehicleControl:
             _logger.info('####################################################### offroad ##########################################')
         return isOffRoad
 
+    def getEmergencyBrakeDistance(self, carstate: State):
+        return carstate.speed_x / 1.5
+
+
     def get_max_grippy_speed(self, a_radwinkel, carstate:State, target: Coordinate):
         radwinkel = abs(a_radwinkel)
         if( self.isOffroad(carstate)):
             speed_mph = 5
         else:
-             if (target.distance < DISTANCE_EMERGENCY_BRAKE):
+             if (target.distance < self.getEmergencyBrakeDistance(carstate)):
                  speed_mph = SAFE_CORNERING_SPEED
              else:
-                 if(radwinkel < 2):
+                 if(radwinkel < 1):
                     speed_mph = 300
-                 elif (radwinkel < 4):
+                 elif (radwinkel < 2):
                     speed_mph = 180
-                 elif(radwinkel < 6):
+                 elif(radwinkel < 3):
                     speed_mph = 100
-                 elif(radwinkel < 8):
+                 elif(radwinkel < 4):
                     speed_mph = 60
-                 elif(radwinkel < 10):
+                 elif(radwinkel < 5):
                     speed_mph = 50
                  else:
                     speed_mph = SAFE_CORNERING_SPEED
