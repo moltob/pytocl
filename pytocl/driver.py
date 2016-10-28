@@ -19,8 +19,6 @@ class Driver:
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
-        self.accelerator = 0.0
-        self.brake = 0.0
         self.pid_angle = PID(9, 0.05, 0)
         self.pid_dist = PID(0.5, 0.02, 0)
         self.pid_speed = PID(20, 0, 0)
@@ -98,7 +96,8 @@ class Driver:
 
     def createOvertakeList(self):
         #self.overtakelist.add(0.5, 0, 250)
-        self.overtakelist.add(0.5, 1550, 1900)
+        #self.overtakelist.add(0.5, 1550, 1900)
+        pass
 
     @property
     def range_finder_angles(self):
@@ -154,7 +153,6 @@ class Driver:
         pass
 
     def startDrive(self, carstate: State) -> Command:
-
         if carstate.distance_raced > 25 and self.driveMode == 0:
             self.driveMode = 1
 
@@ -166,8 +164,25 @@ class Driver:
         """basic function to control car on street"""
         command = Command()
 
+        command.steering = self.calc_steering(carstate, center_dist, k_p_center, k_i_center, k_d_center, oversteer_angle)
+        _logger.info('command.steering: {}'.format(command.steering))
 
-        # dummy steering control:
+        command.accelerator, command.brake = self.calc_accel_and_brake(carstate, command.steering, tar_speed, K_acc, T_acc, K_brake, T_brake)
+
+        #_logger.info('accelerator: {}'.format(command.accelerator))
+        #_logger.info('brake: {}'.format(command.brake))
+
+        #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
+        command.gear = self.shift_gears(carstate)
+
+        if self.data_logger:
+            self.data_logger.log(carstate, command)
+
+        _logger.info("Distance: " + str(carstate.distance_from_start))
+
+        return command
+
+    def calc_steering(self, carstate: State, center_dist, k_p_center, k_i_center, k_d_center, oversteer_angle=0):
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
 
         steering_stellgr_angle = min(1, steering_stellgr_angle)
@@ -179,26 +194,24 @@ class Driver:
         steering_stellgr_dist = min(1, steering_stellgr_dist)
         steering_stellgr_dist = max(-1, steering_stellgr_dist)
 
-        if over_steer:
-            command.steering = oversteer_angle
+        if oversteer_angle > 0:
+            steering = oversteer_angle
         else:
-            command.steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 3
+            steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 3
 
-        if command.steering > 1:
-            command.steering = 1
+        steering = min(1, steering)
+        steering = max(-1, steering)
 
-        if command.steering < -1:
-            command.steering = -1
+        return steering
 
-        _logger.info('command.steering: {}'.format(command.steering))
-
-        if abs(command.steering) < 0.1:
+    def calc_accel_and_brake(self, carstate, steering, tar_speed, K_acc, T_acc, K_brake, T_brake):
+        if abs(steering) < 0.1:
             if carstate.distance_raced > 80:
                 K_acc = 1.0
             else:
                 K_acc = 0.75
             K_brake = 1
-        elif abs(command.steering) < 0.3:
+        elif abs(steering) < 0.3:
             if K_acc == 0:
                 K_acc = 0.8
 
@@ -222,50 +235,39 @@ class Driver:
 
         if speed_control > 0:
             self.acc_counter += 1
-            self.accelerator = pt1up(K_acc, T_acc, self.acc_counter)
+            accelerator = pt1up(K_acc, T_acc, self.acc_counter)
             #self.accelerator = min(100,speed_control) / 100
-            self.brake = 0
+            brake = 0
             self.brake_counter = 0
         elif speed_control < 0:
             #self.brake = -(max(-100,speed_control) / 100)
             self.brake_counter += 1
-            self.brake = pt1up(K_brake, T_brake, self.brake_counter)
-            self.accelerator = 0
+            brake = pt1up(K_brake, T_brake, self.brake_counter)
+            accelerator = 0
             self.acc_counter = 0
         else:
-            self.accelerator = 0
-            self.brake = 0
+            accelerator = 0
+            brake = 0
             self.brake_counter = 0
             self.acc_counter = 0
 
-        self.accelerator = min(1, self.accelerator)
-        self.accelerator = max(-1, self.accelerator)
-        self.brake = min(1, self.brake)
-        self.brake = max(-1, self.brake)
+        accelerator = min(1, accelerator)
+        accelerator = max(-1, accelerator)
+        brake = min(1, brake)
+        brake = max(-1, brake)
 
-        #self.accel_and_brake(carstate.speed_x, tar_speed)
+        return accelerator, brake
 
-        command.accelerator = self.accelerator
-        #_logger.info('accelerator: {}'.format(command.accelerator))
-
-        command.brake = self.brake
-        #_logger.info('brake: {}'.format(command.brake))
-        # gear shifting:
-        #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
-        command.gear = carstate.gear or 1
+    def shift_gears(self, carstate):
+        gear = carstate.gear or 1
         if carstate.rpm > 8500 and carstate.gear < 6:
             #_logger.info('switching up')
-            command.gear = carstate.gear + 1
+            gear = carstate.gear + 1
         elif carstate.rpm < 5000 and carstate.gear > 1:
             #_logger.info('switching down')
-            command.gear = carstate.gear - 1
+            gear = carstate.gear - 1
 
-        if self.data_logger:
-            self.data_logger.log(carstate, command)
-
-        _logger.info("Distance: " + str(carstate.distance_from_start))
-
-        return command
+        return gear
 
     def calc_target_speed(self, carstate: State):
         if carstate.distances_from_edge[9] < 20:
