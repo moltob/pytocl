@@ -29,8 +29,11 @@ class Dynamic:
         # dummy steering control:
         #
         speed = mylane.velocity()
-
         angle = mylane.angle()
+
+        brake_high = 25
+        brake_mid = 70
+        brake_low = 94
 
         dSpeed = speed - carstate.speed_x
         self.gear = carstate.gear
@@ -45,15 +48,15 @@ class Dynamic:
             if (dSpeed < 0):
                 dSpeedFactor = (100/carstate.speed_x) * speed
             # hart bremsen
-                if (dSpeedFactor < 25):
+                if (dSpeedFactor < brake_high):
                     self.brake = 1
                     print("BRAKE HARD")
             # mittel
-                elif (dSpeedFactor >= 25) and (dSpeedFactor < 70):
+                elif (dSpeedFactor >= brake_high) and (dSpeedFactor < brake_mid):
                     self.brake = 0.8
                     print("BRAKE MID")
             # sanft bremsen
-                elif (dSpeedFactor >=70) and (dSpeedFactor <94):
+                elif (dSpeedFactor >= brake_mid) and (dSpeedFactor < brake_low):
                     self.brake = 0.4
                     print("BRAKE LIGHT")
                 else :
@@ -98,12 +101,22 @@ class Dynamic:
             #_logger.info('switching down')
             self.gear = carstate.gear -1
 
-    def accelerate (self, speed, carstate : State):
-
-        if (speed > carstate.speed_x):
-            if abs(carstate.speed_y) >= 0:
-                self.accelerator += 1
+    def accelerate(self, speed, carstate : State):
+        if carstate.distance_from_start < 100 or carstate.distance_from_start > 3580:
+            self.accelerator = 1
+            #print("Dist: " + str(carstate.distance_from_start))
+        elif (speed > carstate.speed_x):
+            if abs(carstate.speed_y) > carstate.speed_x+10:
+                self.accelerator = -0.5
+            elif abs(carstate.speed_y) > carstate.speed_x+5:
+                self.accelerator = 0
             else:
-                self.accelerator -= 0.5
+                if self.accelerator < 0.5:
+                    self.accelerator = 0.5
+                else:
+                    self.accelerator = 1
         else:
-            self.accelerator -= 0.7
+            self.accelerator = 0
+
+        #print( "acc: " + str(self.accelerator))
+
