@@ -27,7 +27,7 @@ class Driver:
         self.speedlist = SpeedList()
         self.overtakelist = OvertakeList()
         self.createCorkScrewSpeedlist()
-        self.createOvertakeList();
+        self.createOvertakeList()
         self.acc_counter = 0
         self.brake_counter = 0
         self.driveMode = 0
