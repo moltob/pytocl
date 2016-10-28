@@ -61,16 +61,16 @@ class Driver:
         # basic acceleration to target speed:
         targetAcceleration = self.accelerator.update(carstate)
         if targetAcceleration < 0:
-            if self.wheel_spin.slipFactor(carstate) < 0.5:
-                command.brake = min(-targetAcceleration * 0.5, 0.5)
+            if self.wheel_spin.slipFactor(carstate) <= 0.001:
+                command.brake = min(-targetAcceleration * 0.4, 1)
             else:
-                command.brake = -targetAcceleration * 0.5
+                command.brake = min(-targetAcceleration * 0.4, 1)
             command.accelerator = 0.0
         else:
-            # if self.wheel_spin.slipFactor(carstate) < 0.5:
-            #    command.accelerator = min(targetAcceleration, 0.2)
-            # else:
-            command.accelerator = targetAcceleration
+            if self.wheel_spin.slipFactor(carstate) <= 0.001:
+                command.accelerator = min(targetAcceleration, 1)
+            else:
+                command.accelerator = targetAcceleration
             command.brake = 0.0
 
         #_logger.info('accelerator: {}'.format(command.accelerator))
