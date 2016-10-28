@@ -12,7 +12,7 @@ class Plan:
 
     def get_desired_position(self):
         dfe = self.state.distances_from_edge
-        center_index = int(self.state.angle / 10) + 10 if abs(int(self.state.angle / 10)) < 8 else None
+        center_index = int(self.state.angle / 10) + 10 if abs(int(self.state.angle / 10)) < 7 else None
         if center_index is None:
             return 0
 

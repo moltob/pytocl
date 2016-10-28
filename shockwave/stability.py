@@ -13,6 +13,7 @@ class Stability:
         self.steerer = Steerer(self.plan)
         self.accelerator = Accelerator(self.plan)
         self.gearer = Gearer(self.plan)
+        self.breakInhibitor = 2
 
     def get_command(self, state: State) -> Command:
         self.plan.state = state
@@ -24,8 +25,13 @@ class Stability:
         command.steering = self.steerer.get_steering_angle(state)
 
         ac = self.accelerator.get_acceleration(state)
-        if (abs(command.steering) < 0.3):
-            command.brake = -ac if ac < 0 else 0
+        #if (abs(command.steering) < 0.3):
+        if ac < 0:
+            if self.breakInhibitor > 0:
+                self.breakInhibitor -= 1
+            else:
+                command.brake = -ac if ac < 0 else 0
+                self.breakInhibitor = 2
 
         command.accelerator = ac if ac > 0 else 0
         command.gear = self.gearer.get_gear(state)
