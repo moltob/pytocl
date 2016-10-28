@@ -30,23 +30,6 @@ class Lane:
         max_dist = 0
         max_idx = -1
 
-        if carstate.distance_from_start < Lane.last_dist_from_start:
-            self.vel = 10
-            print(' BACKWARDS ***************')
-            print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle) + ' --- ' + str(
-                carstate.speed_x))
-            # print (carstate.distances_from_edge)
-            # print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
-            if carstate.distance_from_center < 0:
-                self.ang = -30 - carstate.angle
-            else:
-                self.ang = 30 - carstate.angle
-
-            print(self.vel)
-            print(self.ang)
-            return
-
-
         if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
             print('***************')
             if carstate.speed_x < 10 \
@@ -69,12 +52,32 @@ class Lane:
             if Lane.backwards == True:
                 self.vel = -10
 
-            print('Direction: ' + str(Lane.backwards))
+            #print('Direction: ' + str(Lane.backwards))
             print (self.vel)
             print (self.ang)
             return
-        else:
-            print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+        #else:
+            #print('*==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle) + ' --- ' + str(carstate.distance_from_start))
+
+        if carstate.distance_from_start > 30 and carstate.distance_from_start < Lane.last_dist_from_start:
+            self.vel = 10
+            print(' BACKWARDS ***************')
+            print('==> ' + str(carstate.distance_from_start) + ' --- ' + str(Lane.last_dist_from_start) + ' --- ' + str(
+                carstate.speed_x))
+            # print (carstate.distances_from_edge)
+            # print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+            if carstate.distance_from_center < 0:
+                self.ang = -30 - carstate.angle
+            else:
+                self.ang = 30 - carstate.angle
+
+            print(self.vel)
+            print(self.ang)
+            return
+
+        Lane.last_dist_from_start = carstate.distance_from_start
+
+
 
         Lane.backwards = False
 
@@ -99,7 +102,7 @@ class Lane:
             #self.vel=10
             #print(' #############   Winkel ' +  str(self.ang) + '    ####################')
 
-        print('velocity, angle : {}, {}, {}, {}'.format(max_dist, self.vel, self.ang, carstate.distance_from_start))
+        #print('velocity, angle : {}, {}, {}, {}'.format(max_dist, self.vel, self.ang, carstate.distance_from_start))
         #print('distance_from_edge: {}'.format(carstate.distances_from_edge))
 
     def velocity(self):
