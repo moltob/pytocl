@@ -6,7 +6,6 @@ from pytocl.car import State, Command, MPS_PER_KMH, CustomData
 from pytocl.stability import StabilityController
 from pytocl.strategy import StrategyController
 from pytocl.emergency import EmergencyController
-from pytocl.planing import PlaningController
 
 _logger = logging.getLogger(__name__)
 
@@ -23,11 +22,9 @@ class Driver:
         self.data_logger = DataLogWriter() if logdata else None
         self.stability_controller = StabilityController()
         self.strategy_controller = StrategyController()
-        self.planing_controller = PlaningController()
         self.emergency_controller = EmergencyController()
 
-
-@property
+    @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
 
@@ -56,10 +53,7 @@ class Driver:
         track.
         """
         custom_data = CustomData()
-        (planing_speed, planing_target_pos) = self.planing_controller.control(carstate, custom_data)
-        #_logger.info('PlaningController: speed, pos: {}, {}'.format(planing_speed, planing_target_pos))
-        (strategy_speed, strategy_target_pos) = self.strategy_controller.control(planing_speed, planing_target_pos, carstate, custom_data)
-        #_logger.info('StrategyController: speed, pos: {}, {}'.format(strategy_speed, strategy_target_pos))
+        (strategy_speed, strategy_target_pos) = self.strategy_controller.control(carstate, custom_data)
         next_command = self.stability_controller.control(strategy_speed, strategy_target_pos, carstate)
 
         self.emergency_controller.control(carstate, next_command, custom_data)

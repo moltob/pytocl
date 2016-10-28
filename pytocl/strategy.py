@@ -19,10 +19,10 @@ class StrategyController:
         self.m_p2 = 0
         self.m_p3 = 0
 
-    def control(self, planing_speed, planing_target_pos, carstate: State, custom_data: CustomData):
+    def control(self, carstate: State, custom_data: CustomData):
         strategy_speed, strategy_target_pos = self.control_speed(carstate, custom_data)
-        speed = min(strategy_speed, planing_speed)
-        target_pos = planing_target_pos
+        speed = strategy_speed
+        target_pos = strategy_target_pos
 
         return speed, target_pos
 
