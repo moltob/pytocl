@@ -28,6 +28,9 @@ class Driver:
         self.brake_begin = False
         self.brake_begin_consumed = False
         self.outside_track = False
+        self.is_stuck = False
+        self.stuck_counter = 0
+        self.reverse_drive_counter = 0
 
     @property
 
