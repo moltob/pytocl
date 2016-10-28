@@ -24,10 +24,11 @@ class Pid:
 
 
 class Curve:
-    def __init__(self, startPoint, endPoint, speed):
+    def __init__(self, startPoint, endPoint, speed, relativePos):
         self.sp = startPoint
         self.ep = endPoint
         self.spe = speed
+        self.relPos = relativePos
 
     def startPoint(self):
         return self.sp
@@ -38,6 +39,8 @@ class Curve:
     def speedKmh(self):
         return self.spe
 
+    def relativePosition(self):
+        return self.relPos
 
 class Driver:
     """Driving logic.
@@ -73,57 +76,56 @@ class Driver:
     def __init__(self, logdata=True):
         #self.directions = -90, -75, -60, -45, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 45, 60, 75, 90
         self.directions = -90, -60, -40, -25, -20, -15, -10, -5, -2, 0, 2, 5, 10, 15, 20, 25, 40, 60, 90
+        self.currentDriveState = DriveStateStraight(-0.8)
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
-        self.dt = 0.020
-        self.pidSpeed = Pid()
-        self.pidAngle = Pid()
-        self.pidDistCenter = Pid()
 
         self.lap = 0
         self.lastCurve = -1
         self.timeMsec = 0
         self.curves = list()
         self.speedSetPoint = 0.0
+
+        self.currentCurveIndex = 0
         
 
-        c0 = Curve(100, 150, 150)
-        self.curves.append(c0)
+        #c0 = Curve(100, 150, 150)
+        #self.curves.append(c0)
 
-        c1_a = Curve(350, 400, 80)
+        c1_a = Curve(350, 400, 80, -0.8)
         self.curves.append(c1_a)
 
-        c1_b = Curve(450, 500, 80)
-        self.curves.append(c1_b)
+        #c1_b = Curve(450, 500, 80)
+        #self.curves.append(c1_b)
 
-        c2 = Curve(700, 750, 100)
+        c2 = Curve(700, 750, 100, 0.8)
         self.curves.append(c2)
 
-        c3 = Curve(970, 1000, 150)
+        c3 = Curve(970, 1000, 150, 0.8)
         self.curves.append(c3)
 
-        c4 = Curve(1450, 1500, 145)
+        c4 = Curve(1450, 1500, 145, -0.8)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 120)
+        c5 = Curve(1880, 1940, 120, -0.8)
         self.curves.append(c5)
 
-        c6pre = Curve(2300, 2350, 150)
-        self.curves.append(c6pre)
+        #c6pre = Curve(2300, 2350, 150)
+        #self.curves.append(c6pre)
 
-        c6pre2 = Curve(2350, 2400, 120)
-        self.curves.append(c6pre2)
+        #c6pre2 = Curve(2350, 2400, 120)
+        #self.curves.append(c6pre2)
 
-        c6 = Curve(2400, 2500, 70)
+        c6 = Curve(2400, 2500, 70, 0.8)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2650, 125)
+        c7 = Curve(2600, 2650, 125, -0.8)
         self.curves.append(c7)
 
-        c8 = Curve(2900, 2950, 140)
+        c8 = Curve(2900, 2950, 140, 0.8)
         self.curves.append(c8)
 
-        c9 = Curve(3200, 3285, 70)
+        c9 = Curve(3200, 3285, 70, -0.8)
         self.curves.append(c9)
 
 
@@ -136,54 +138,6 @@ class Driver:
         track.
         """
         command = Command()
-
-        #distCenterKp = 10.0
-        distCenterKp = 2.5
-        distCenterKd = 4
-        distCenterKi = 0.0 #10.0
-
-        speedKp = 15.0
-        speedKd = 0.0
-        speedKi = 0.0
-
-        #angleKp = 0.07
-        angleKp = 0.03
-        angleKd = 0.01 #0.02
-        angleKi = 0.0
-
-
-        distFromCenter = carstate.distance_from_center
-        speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
-        trackDistance = carstate.distance_from_start
-
-        #Track planing:
-        maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
-        angleAheadFree = - self.directions[maxDistanceIndex]
-
-        if((distFromCenter <1) or ( maxDistance != -1 and abs(carstate.angle)<90 and (abs(angleAheadFree)>abs(carstate.angle) or abs(carstate.angle) < 8))):
-            currentAngle = - self.directions[maxDistanceIndex]
-            distCenterKp = 0
-            distCenterKd = 0
-            distCenterKi = 0
-        else:
-            currentAngle = carstate.angle
-
-        if(distCenterKp == 0):
-            print('curve ahead')
-        else:
-            print('curve angle')
-
-        printMaxDistanceAhead = 0
-        if (printMaxDistanceAhead):
-            if(maxDistance != -1):
-                print('maxDistance' + str(maxDistance) + '\t angle: ' + str(angleAheadFree))
-
-        #self.currentState = 'straight ahead'
-        #if(angleAheadFree < 5):
-        #    self.currentState = 'straight ahead'
-        #else:
-        #    self.currentState = 'curve'
-        #print(self.currentState)
 
 
         self.timeMsec = self.timeMsec + 20
@@ -200,12 +154,23 @@ class Driver:
 
         speed_SetPoint_kmh = 240.0
         curve = -1
-        for c in self.curves:
+        trackDistance = carstate.distance_from_start
+        isInCurve = False
+        for cIndex, c in enumerate(self.curves):
             curve = curve + 1
             start = c.startPoint()
             end = c.endPoint()
             if (trackDistance > start and trackDistance < end):
-                speed_SetPoint_kmh = c.speedKmh()
+                isInCurve = True
+                self.currentCurveIndex = cIndex
+
+                if (type(self.currentDriveState) is not DriveStateCurve):
+                    self.currentDriveState = DriveStateCurve(c.speedKmh() * MPS_PER_KMH, self.directions)
+                    print('entered curve')
+
+        if(not isInCurve and type(self.currentDriveState) is not DriveStateStraight):
+            self.currentDriveState = DriveStateStraight(self.curves[(self.currentCurveIndex +1) % len(self.curves)].relativePosition())
+            print('entered straight')
 
         if(curve != self.lastCurve):
             if(curve == 0):
@@ -214,13 +179,10 @@ class Driver:
         if(curve == 0 and self.lap == 1):
             speed_SetPoint_kmh = 240.0
 
-        speed_SetPoint_ms = speed_SetPoint_kmh * MPS_PER_KMH
-        self.speedSetPoint = speed_SetPoint_ms
-        cmdDistCenter = self.pidDistCenter.calc(trackPos_SetPoint, distFromCenter, self.dt, distCenterKp, distCenterKd, distCenterKi)
-        cmdAngle = self.pidAngle.calc(angle_SetPoint, currentAngle, self.dt, angleKp, angleKd, angleKi)
-        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, speedKp, speedKd, speedKi)
 
-        command.steering = -cmdAngle  + cmdDistCenter
+
+        cmdSteering, cmdAccelerator = self.currentDriveState.drive(carstate)
+
         command.accelerator = 0.0
         command.brake = 0.0
         if(cmdAccelerator > 0.0):
@@ -242,6 +204,8 @@ class Driver:
 
         if(command.brake == 0.0 and command.accelerator > 0.0 and command.accelerator < 1.0):
             command.accelerator = 1.0
+
+        command.steering = cmdSteering
 
         if(command.steering > 1):
             command.steering = 1
@@ -267,3 +231,103 @@ class Driver:
         ##    print(carstate.distance_from_start)
 
         return command
+
+
+class DriveState:
+    def __init__(self):
+        self.speed_SetPoint_ms = 300 * MPS_PER_KMH
+        self.dt = 0.020
+        self.pidSpeed = Pid()
+        self.pidAngle = Pid()
+        self.pidDistCenter = Pid()
+        self.angle_SetPoint = 0
+
+class DriveStateStraight(DriveState):
+
+    def __init__(self, destOffset):
+        super().__init__()
+        #distCenterKp = 10.0
+        self.distCenterKp = 2.5
+        self.distCenterKd = 4
+        self.distCenterKi = 0.0 #10.0
+
+        self.speedKp = 15.0
+        self.speedKd = 0.0
+        self.speedKi = 0.0
+
+        #angleKp = 0.07
+        self.angleKp = 0.03
+        self.angleKd = 0.01 #0.02
+        self.angleKi = 0.0
+
+        self.destDistanceOffset = destOffset
+
+    def drive(self, carstate):
+        speed_SetPoint_ms = 350 * MPS_PER_KMH
+        self.speedSetPoint = speed_SetPoint_ms
+
+        distFromCenter = carstate.distance_from_center
+        speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
+        trackDistance = carstate.distance_from_start
+
+
+        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, self.dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+
+        cmdSteering = cmdDistCenter - cmdAngle
+
+        return cmdSteering, cmdAccelerator
+
+
+class DriveStateCurve(DriveState):
+
+    def __init__(self, destSpeedMs, directions):
+        super().__init__()
+        #distCenterKp = 10.0
+        #self.distCenterKp = 2.5
+        #self.distCenterKd = 4
+        #self.distCenterKi = 0.0 #10.0
+
+        self.speedKp = 15.0
+        self.speedKd = 0.0
+        self.speedKi = 0.0
+
+        angleKp = 0.07
+        self.angleKp = 0.03
+        self.angleKd = 0.01 #0.02
+        self.angleKi = 0.0
+
+        self.angle_SetPoint = 0.0
+
+        self.destSpeedMs = destSpeedMs
+
+        self.directions = directions
+
+    def drive(self, carstate):
+        speed_SetPoint_ms = self.speed_SetPoint_ms * MPS_PER_KMH
+        self.speedSetPoint = speed_SetPoint_ms
+
+        distFromCenter = carstate.distance_from_center
+        speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
+        trackDistance = carstate.distance_from_start
+
+        #Track planing:
+        maxDistanceIndex, maxDistance = max(enumerate(carstate.distances_from_edge), key=operator.itemgetter(1))
+        newAngle = - self.directions[maxDistanceIndex]
+
+        #cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, newAngle, self.dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+
+        cmdSteering = -cmdAngle
+
+
+
+        printMaxDistanceAhead = 0
+        if (printMaxDistanceAhead):
+            if(maxDistance != -1):
+                print('maxDistance' + str(maxDistance) + '\t angle: ' + str(newAngle))
+
+
+        return cmdSteering, cmdAccelerator
