@@ -91,6 +91,7 @@ class Driver:
         self.speedSetPoint = 0.0
 
         self.currentCurveIndex = 0
+        self.lastLapTime = 0
         
 
         c0 = Curve(150, 155, 230  , 250, -0.3)
@@ -195,9 +196,10 @@ class Driver:
         if(curve == 0 and self.lap == 1):
             speed_SetPoint_kmh = 240.0
 
+        #print('dt: ' +str(carstate.current_lap_time - self.lastLapTime))
 
 
-        cmdSteering, cmdAccelerator = self.currentDriveState.drive(carstate)
+        cmdSteering, cmdAccelerator = self.currentDriveState.drive(carstate,(carstate.current_lap_time - self.lastLapTime ))
 
         command.accelerator = 0.0
         command.brake = 0.0
@@ -245,6 +247,7 @@ class Driver:
         ##if(True == printDistance):
         ##   _logger.info(carstate.distance_from_start)
         ##    print(carstate.distance_from_start)
+        self.lastLapTime = carstate.current_lap_time
 
         return command
 
@@ -278,7 +281,7 @@ class DriveStateStraight(DriveState):
 
         self.destDistanceOffset = destOffset
 
-    def drive(self, carstate):
+    def drive(self, carstate, dt):
         #speed_SetPoint_ms = 350 * MPS_PER_KMH
         #self.speedSetPoint = speed_SetPoint_ms
 
@@ -287,9 +290,9 @@ class DriveStateStraight(DriveState):
         trackDistance = carstate.distance_from_start
 
 
-        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
-        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, self.dt, self.angleKp, self.angleKd, self.angleKi)
-        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, dt, self.speedKp, self.speedKd, self.speedKi)
 
         cmdSteering = cmdDistCenter - cmdAngle
 
@@ -320,7 +323,7 @@ class DriveStateCurve(DriveState):
 
         self.directions = directions
 
-    def drive(self, carstate):
+    def drive(self, carstate, dt):
         #speed_SetPoint_ms = self.speed_SetPoint_ms * MPS_PER_KMH
         #self.speedSetPoint = speed_SetPoint_ms
 
@@ -333,8 +336,8 @@ class DriveStateCurve(DriveState):
         newAngle = - self.directions[maxDistanceIndex]
 
         #cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
-        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, newAngle, self.dt, self.angleKp, self.angleKd, self.angleKi)
-        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, newAngle, dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, dt, self.speedKp, self.speedKd, self.speedKi)
 
         cmdSteering = -cmdAngle
 
@@ -371,7 +374,7 @@ class DriveStateKiesbett(DriveState):
         self.destDistanceOffset = 0
         self.destSpeedMs =80 * MPS_PER_KMH
 
-    def drive(self, carstate):
+    def drive(self, carstate,dt):
         #speed_SetPoint_ms = 350 * MPS_PER_KMH
         #self.speedSetPoint = speed_SetPoint_ms
 
@@ -380,9 +383,9 @@ class DriveStateKiesbett(DriveState):
         trackDistance = carstate.distance_from_start
 
 
-        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
-        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, self.dt, self.angleKp, self.angleKd, self.angleKi)
-        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, dt, self.speedKp, self.speedKd, self.speedKi)
 
         cmdSteering = cmdDistCenter - cmdAngle
 
