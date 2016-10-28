@@ -29,8 +29,11 @@ class Dynamic:
         # dummy steering control:
         #
         speed = mylane.velocity()
-
         angle = mylane.angle()
+
+        brake_high = 25
+        brake_mid = 70
+        brake_low = 94
 
         dSpeed = speed - carstate.speed_x
         self.gear = carstate.gear
@@ -45,15 +48,15 @@ class Dynamic:
             if (dSpeed < 0):
                 dSpeedFactor = (100/carstate.speed_x) * speed
             # hart bremsen
-                if (dSpeedFactor < 25):
+                if (dSpeedFactor < brake_high):
                     self.brake = 1
                     print("BRAKE HARD")
             # mittel
-                elif (dSpeedFactor >= 25) and (dSpeedFactor < 70):
+                elif (dSpeedFactor >= brake_high) and (dSpeedFactor < brake_mid):
                     self.brake = 0.8
                     print("BRAKE MID")
             # sanft bremsen
-                elif (dSpeedFactor >=70) and (dSpeedFactor <94):
+                elif (dSpeedFactor >= brake_mid) and (dSpeedFactor < brake_low):
                     self.brake = 0.4
                     print("BRAKE LIGHT")
                 else :
