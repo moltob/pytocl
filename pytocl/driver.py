@@ -4,10 +4,10 @@ from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.pid import PID
 from pytocl.speedlist import SpeedList
+from pytocl.overtakelist import OvertakeList
 from pytocl.filter import *
 
 _logger = logging.getLogger(__name__)
-
 
 class Driver:
     """Driving logic.
@@ -25,9 +25,12 @@ class Driver:
         self.pid_dist = PID(0.5, 0.02, 0)
         self.pid_speed = PID(20, 0, 0)
         self.speedlist = SpeedList()
+        self.overtakelist = OvertakeList()
         self.createCorkScrewSpeedlist()
+        self.createOvertakeList();
         self.acc_counter = 0
         self.brake_counter = 0
+        self.driveMode = 0
 
     def createCorkScrewSpeedlist(self):
         self.speedlist.add(150,150)
@@ -62,6 +65,10 @@ class Driver:
         self.speedlist.add(3230,30)
         self.speedlist.add(3320,200)
 
+    def createOvertakeList(self):
+        #self.overtakelist.add(0.5, 0, 250)
+        self.overtakelist.add(0.5, 1550, 1900)
+
     @property
     def range_finder_angles(self):
         """Iterable of 19 fixed range finder directions [deg].
@@ -90,25 +97,88 @@ class Driver:
         track.
         """
 
-        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        return self.controlCar(carstate, tar_speed, 0.5, 20, 0.5, 20)
+        if self.driveMode == 0:
+            command = self.startDrive(carstate)
+        elif  self.driveMode == 1:
+            command = self.optimizedDrive(carstate)
+        else:
+            command = self.overtakeDrive(carstate)
+        _logger.info('driveMode: {}'.format(self.driveMode))
+        return command
 
-    def controlCar(self, carstate: State, tar_speed, K_acc, T_acc, K_brake, T_brake) -> Command:
+    def overtakeDrive(self, carstate: State) -> Command:
+        bCanOvertake, distance_to_go = self.overtakelist.canOvertake(carstate.distance_from_start)
+
+        _logger.info('bCanOvertake: {}'.format(bCanOvertake))
+
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        if bCanOvertake:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0.8, T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.8, k_p_center=1, k_i_center=0.02, k_d_center=0)
+        return None
+        pass
+
+    def optimizedDrive(self, carstate: State) -> Command:
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        pass
+
+    def startDrive(self, carstate: State) -> Command:
+
+        if carstate.distance_raced > 25 and self.driveMode == 0:
+            self.driveMode = 1
+
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        return self.controlCar(carstate, over_steer=True, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        pass
+
+    def controlCar(self, carstate: State, over_steer, oversteer_angle, tar_speed, K_acc, T_acc, K_brake, T_brake, center_dist, k_p_center, k_i_center, k_d_center) -> Command:
         """basic function to control car on street"""
         command = Command()
 
+
         # dummy steering control:
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
-        steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, 0)
 
-        command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
+        steering_stellgr_angle = min(1, steering_stellgr_angle)
+        steering_stellgr_angle = max(-1, steering_stellgr_angle)
+
+        self.pid_dist.set_params(k_p_center, k_i_center, k_d_center)
+        steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, center_dist)
+
+        steering_stellgr_dist = min(1, steering_stellgr_dist)
+        steering_stellgr_dist = max(-1, steering_stellgr_dist)
+
+        if over_steer:
+            command.steering = oversteer_angle
+        else:
+            command.steering = (steering_stellgr_angle + steering_stellgr_dist) / 2
+
+        if command.steering > 1:
+            command.steering = 1
+
+        if command.steering < -1:
+            command.steering = -1
+
+        _logger.info('command.steering: {}'.format(command.steering))
 
         if abs(command.steering) < 0.1:
-            K_acc = 1
-            K_brake = 1
+            if K_acc == 0:
+                K_acc = 1
+
+            if K_brake == 0:
+                K_brake = 1
+        elif abs(command.steering) < 0.3:
+            if K_acc == 0:
+                K_acc = 0.8
+
+            if K_brake == 0:
+                K_brake = 0.8
         else:
-            K_acc = 0.5
-            K_brake = 1
+            if K_acc == 0:
+                K_acc = 0.5
+
+            if K_brake == 0:
+                K_brake = 0.5
 
         #tar_speed = self.calc_target_speed(carstate)
         #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)

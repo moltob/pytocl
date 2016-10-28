@@ -19,3 +19,9 @@ class PID:
 
         return y_gesamt
 
+    def set_params(self, k_p, k_i, k_d):
+        self.k_p = k_p
+        self.k_i = k_i
+        self.k_d = k_d
+
+
