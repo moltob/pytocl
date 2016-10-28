@@ -1,7 +1,7 @@
 import logging
 
 from pytocl.analysis import DataLogWriter
-from pytocl.car import State, Command, MPS_PER_KMH, KMH_PER_MPS
+from pytocl.car import State, Command, MPS_PER_KMH, KMH_PER_MPS, G_CONST
 
 _logger = logging.getLogger(__name__)
 
@@ -88,12 +88,12 @@ class Driver:
 
             if (dist_centre > dist_left and dist_centre > dist_right):
                 self.currentAngleCorr += 0.0
-            elif (dist_left > dist_centre and dist_centre > dist_right):
-                # left turn ahead
-                self.currentAngleCorr += 0.25
-            elif (dist_left < dist_centre and dist_centre < dist_right):
-                # right turn ahead
-                self.currentAngleCorr -= 0.25
+            # elif (dist_left > dist_centre and dist_centre > dist_right):
+            #     # left turn ahead
+            #     self.currentAngleCorr += 0.15
+            # elif (dist_left < dist_centre and dist_centre < dist_right):
+            #     # right turn ahead
+            #     self.currentAngleCorr -= 0.15
             elif (dist_left > dist_right):
                 self.currentAngleCorr += 0.2
             else:
@@ -142,11 +142,11 @@ class Driver:
                 self.brake_begin_consumed = False
                 self.target_velocity = 250
 
-            if self.target_velocity < 65:
-                self.target_velocity = 65;
+            if self.target_velocity < 70:
+                self.target_velocity = 70;
 
         else:
-            self.target_velocity = 50
+            self.target_velocity = 30
 
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
@@ -264,33 +264,56 @@ class Driver:
         else:
             self.accelerator = 0
 
-        if self.target_velocity * MPS_PER_KMH < carstate.speed_x:
-            if (carstate.speed_x - self.target_velocity * MPS_PER_KMH) < 5:
-                self.breaking = 0.0
-            elif (carstate.speed_x * KMH_PER_MPS - self.target_velocity ) >= 40:
-                if self.breaking > 0.0:
-                    self.breaking += 0.02
-                else:
-                    if (carstate.speed_x*KMH_PER_MPS > 150):
-                        self.breaking = 0.60
-                    else:
-                        self.breaking = 0.20
-        else:
-            self.breaking = 0.0
-
+        # if self.target_velocity * MPS_PER_KMH < carstate.speed_x:
+        #     if (carstate.speed_x - self.target_velocity * MPS_PER_KMH) < 5:
+        #         self.breaking = 0.0
+        #     elif (carstate.speed_x * KMH_PER_MPS - self.target_velocity ) >= 40:
+        #         if self.breaking > 0.0:
+        #             self.breaking += 0.02
+        #         else:
+        #             if (carstate.speed_x*KMH_PER_MPS > 150):
+        #                 self.breaking = 0.60
+        #             else:
+        #                 self.breaking = 0.20
+        # else:
+        #     self.breaking = 0.0
+        #
         self.accelerator = min(1, self.accelerator)
         self.accelerator = max(-1, self.accelerator)
-
-        self.breaking = min(1, self.breaking)
-
+        #
+        # self.breaking = min(1, self.breaking)
+        #
         command.accelerator = self.accelerator
-        command.brake = self.breaking
+        # command.brake = self.breaking
+        #
+        # #if (command.brake > 0.0):
+        # #_logger.info('accelerator: {}'.format(command.accelerator))
+        # #_logger.info('break: {}'.format(self.breaking))
+        # _logger.info('target velocity: {}'.format(self.target_velocity))
+        # _logger.info('current speed: {}'.format(carstate.speed_x * KMH_PER_MPS))
 
-        #if (command.brake > 0.0):
-        #_logger.info('accelerator: {}'.format(command.accelerator))
-        #_logger.info('break: {}'.format(self.breaking))
-        _logger.info('target velocity: {}'.format(self.target_velocity))
-        _logger.info('current speed: {}'.format(carstate.speed_x * KMH_PER_MPS))
+    def select_brake(self, carstate: State, command: Command):
+        if (carstate.speed_x - self.target_velocity * MPS_PER_KMH) < 5:
+            self.breaking = 0.0
+        else:
+            current_speed_sqr_mps = carstate.speed_x * carstate.speed_x
+            allowed_speed = self.target_velocity
+            look_ahead_dist_meter = self.prev_dist_from_edge_mitte
+
+            allowed_speed_sqr_mps = (allowed_speed * MPS_PER_KMH) * (allowed_speed * MPS_PER_KMH)
+
+            #(currentspeedsqr - allowedspeedsqr) / (2.0 * mu * G);
+            brake_dist_meter = (current_speed_sqr_mps - allowed_speed_sqr_mps) / (2*G_CONST)
+
+            _logger.info('brake dist: {}'.format(brake_dist_meter))
+            _logger.info('look_ahead_dist: {}'.format(look_ahead_dist_meter))
+
+            if brake_dist_meter > look_ahead_dist_meter:
+                self.breaking = 0.7
+
+            self.breaking = min(1, self.breaking)
+            command.brake = self.breaking
+
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
@@ -310,6 +333,8 @@ class Driver:
 
         # basic acceleration to target speed:
         self.select_acceleration(carstate, command)
+
+        self.select_brake(carstate, command)
 
         self.select_gear(carstate, command)
 
