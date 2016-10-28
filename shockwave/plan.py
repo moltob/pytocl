@@ -30,16 +30,12 @@ class Plan:
             left = True
 
         if right and left:
-            print("BOTH")
             return 0
         elif right:
-            print("RIGHT")
             return -0.5
         elif left:
-            print("LEFT")
             return 0.5
         else:
-            print("KEINE")
             return 0
 
         return 0
@@ -56,7 +52,6 @@ class Plan:
            # print(min_dist)
             speed = min_dist + 5
 
-        print(min_dist)
         speed = max(-self.pid.get_action(min_dist), 10)
 
         return speed
