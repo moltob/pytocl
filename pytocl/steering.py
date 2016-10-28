@@ -17,7 +17,7 @@ class Steering:
         self.control = PID(0.7, 0.05, 0, Integrator_max=1, Integrator_min=-1)
         self.track_position = CENTER
         self.orientation = [Orientation(0, LEFT),
-                            Orientation(500, RIGHT), Orientation(1300, LEFT),
+                            Orientation(500, RIGHT), Orientation(1270, LEFT),
                             Orientation(2200, RIGHT),
                             Orientation(2400,CENTER),
                             Orientation(2600, LEFT),
