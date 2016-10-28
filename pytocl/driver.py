@@ -3,6 +3,7 @@ import logging
 from pytocl.steering import Steering
 from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.wheelspin import WheelSpin
 
 from pytocl.acceleration import Acceleration
 
@@ -21,6 +22,7 @@ class Driver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = Acceleration()
         self.steeringControl = Steering()
+        self.wheel_spin = WheelSpin()
 
     @property
     def range_finder_angles(self):
@@ -59,16 +61,27 @@ class Driver:
         # basic acceleration to target speed:
         targetAcceleration = self.accelerator.update(carstate)
         if targetAcceleration < 0:
-            command.brake = -targetAcceleration * 0.5
+            if self.wheel_spin.slipFactor(carstate) < 0.5:
+                command.brake = min(-targetAcceleration * 0.5, 0.5)
+            else:
+                command.brake = -targetAcceleration * 0.5
             command.accelerator = 0.0
         else:
+            # if self.wheel_spin.slipFactor(carstate) < 0.5:
+            #    command.accelerator = min(targetAcceleration, 0.2)
+            # else:
             command.accelerator = targetAcceleration
             command.brake = 0.0
 
         #_logger.info('accelerator: {}'.format(command.accelerator))
         #_logger.info('brake: {}'.format(command.brake))
         #_logger.info('current velocity: {}'.format(carstate.speed_x))
-        _logger.info('distance_from_start: {}'.format(carstate.distance_from_start))
+        _logger.info('distance_from_start: {}, {}, {}, {}'.format(
+            carstate.distance_from_start,
+            self.wheel_spin.slipFactor(carstate),
+            carstate.wheel_velocities[0] + carstate.wheel_velocities[1],
+            carstate.wheel_velocities[2] + carstate.wheel_velocities[3]
+        ))
 
         # gear shifting:
         #_logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))

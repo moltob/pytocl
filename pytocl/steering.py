@@ -22,6 +22,7 @@ class Steering:
                             Orientation(2400,CENTER),
                             Orientation(2600, LEFT),
                             Orientation(2800, RIGHT),
+                            Orientation(3300, CENTER),
                             Orientation(3100, LEFT)]
         # self.control = PID(1, 0, 0)
 
