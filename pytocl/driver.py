@@ -320,7 +320,7 @@ class Driver:
 
     def calc_accel_and_brake(self, carstate, steering, tar_speed, K_acc, T_acc, K_brake, T_brake):
         if abs(steering) < 0.1:
-            K_acc = 0.75
+            K_acc = 1
             K_brake = 1
         elif abs(steering) < 0.3:
             if K_acc == 0:
