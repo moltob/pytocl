@@ -28,6 +28,7 @@ class Value:
 class CustomData(Value):
     def __init__(self):
         cshape = 0.0
+        vel_diff = 0.0
 
 
 class State(Value):
