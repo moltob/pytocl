@@ -21,7 +21,7 @@ class Area(Enum):
 class Opponents:
     def __init__(self):
         self.opponents_diff = np.array([])
-        self.opponents = np.array([])
+        self.opponents = np.array([0 for i in range(36)])
 
     def update(self, carstate: State):
         for i in range(0, 36):
