@@ -157,13 +157,6 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-        # check which drive mode to choose
-        bCanOvertake, distanceToGo, brakedist = self.overtakelist.canOvertake(carstate.distance_from_start)
-
-        #if bCanOvertake:
-        #    self.driveMode = DriveModeStates.DRIVEMODE_OVERTAKE
-        #else:
-        #    self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
 
         self.oponents.update(carstate)
         distanceToFront = self.oponents.dist_to_car(Area.FRONT)
@@ -172,6 +165,14 @@ class Driver:
             self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
         else:
             self.driveMode = DriveModeStates.DRIVEMODE_FOLLOW
+
+        # check which drive mode to choose
+        bCanOvertake, distanceToGo, brakedist = self.overtakelist.canOvertake(carstate.distance_from_start)
+
+        if bCanOvertake and self.driveMode == DriveModeStates.DRIVEMODE_FOLLOW:
+            self.driveMode = DriveModeStates.DRIVEMODE_OVERTAKE
+        else:
+            self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
 
         if self.driveMode == DriveModeStates.DRIVEMODE_STARTUP:
             command = self.startDrive(carstate)
