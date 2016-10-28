@@ -12,6 +12,7 @@ class Acceleration:
     def __init__(self):
         self.control = PID(0.4, 0.0, 0.1, Integrator_max=20, Integrator_min=-20)
         self.targetVelocity = 22
+        self.time = 0
         self.targetTrackVelocity = [
             TrackParameter(0, MAX_VELOCITY_MS),
             TrackParameter(160, 65), TrackParameter(180, MAX_VELOCITY_MS),
@@ -37,7 +38,7 @@ class Acceleration:
             if position >= track.start:
                 self.targetVelocity = track.velocity
 
-    def update(self, carstate):
+    def update(self, carstate: State):
         #deltaAngle = max(min(1, (carstate.angle / 10.0) - (carstate.distance_from_center * 0.4)), -1)
 
         #self.targetVelocity = max(20, ((1.0 - abs(deltaAngle)) * 30.0))
@@ -45,4 +46,7 @@ class Acceleration:
         self.setTargetVelocity(carstate)
         deltaVelocity = (self.targetVelocity - (carstate.speed_x))
 
-        return self.control.update(deltaVelocity)
+        dt = carstate.current_lap_time - self.time
+        self.time = carstate.current_lap_time
+
+        return self.control.update(deltaVelocity, dt / 0.02)
