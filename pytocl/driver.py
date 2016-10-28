@@ -5,10 +5,25 @@ from pytocl.car import State, Command, MPS_PER_KMH
 from pytocl.pid import PID
 from pytocl.speedlist import SpeedList
 from pytocl.overtakelist import OvertakeList
+from pytocl.opponents import Opponents
+from pytocl.opponents import Area
 from pytocl.filter import *
 from math import sqrt
+from enum import Enum
 
 _logger = logging.getLogger(__name__)
+
+class OvertakeStates(Enum):
+    INIT_OVERTAKE=0
+    START_OVERTAKE=1
+    IN_OVERTAKE = 2
+    END_OVERTAKE = 3
+
+class DriveModeStates(Enum):
+    DRIVEMODE_STARTUP=0
+    DRIVEMODE_NORMAL=1
+    DRIVEMODE_OVERTAKE = 2
+    DRIVEMODE_FOLLOW = 3
 
 class Driver:
     """Driving logic.
@@ -23,15 +38,18 @@ class Driver:
         self.pid_angle = PID(9, 0.05, 0)
         self.pid_dist = PID(0.5, 0.02, 0)
         self.pid_speed = PID(20, 0, 0)
+        self.pid_distanceToOpponent = PID(10, 0, 0)
         self.speedlist = SpeedList()
         self.startUpAccelarations = SpeedList()
         self.overtakelist = OvertakeList()
         self.acc_counter = 0
         self.brake_counter = 0
-        self.driveMode = 0
+        self.driveMode = DriveModeStates.DRIVEMODE_STARTUP
+        self.overtakeState = OvertakeStates.INIT_OVERTAKE
         self.createCorkScrewSpeedlist()
         self.createOvertakeList()
         self.createStartupAccelerationsList()
+        self.oponents = Opponents()
 
     def createStartupAccelerationsList(self):
         self.startUpAccelarations.add(0, 0.3)
@@ -110,8 +128,8 @@ class Driver:
 
     def createOvertakeList(self):
         #self.overtakelist.add(0.5, 0, 250)
-        #self.overtakelist.add(0.5, 1550, 1900)
-        pass
+        self.overtakelist.add(0.5, 1550, 1900, 100)
+        self.overtakelist.add(0.5, 3200, 3600, 0)
 
     @property
     def range_finder_angles(self):
@@ -140,41 +158,106 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        # check which drive mode to choose
+        bCanOvertake, distanceToGo, brakedist = self.overtakelist.canOvertake(carstate.distance_from_start)
         if carstate.distance_from_center > 1.3 or carstate.distance_from_center <-1.3:
             self.driveMode = 2
         elif self.driveMode == 2:
             self.driveMode = 1
 
-        if self.driveMode == 0:
+        #if bCanOvertake:
+        #    self.driveMode = DriveModeStates.DRIVEMODE_OVERTAKE
+        #else:
+        #    self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
+
+        self.oponents.update(carstate)
+        distanceToFront = self.oponents.dist_to_car(Area.FRONT)
+
+        if distanceToFront == 200:
+            self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
+        else:
+            self.driveMode = DriveModeStates.DRIVEMODE_FOLLOW
+
+        if self.driveMode == DriveModeStates.DRIVEMODE_STARTUP:
             command = self.startDrive(carstate)
-        elif  self.driveMode == 1:
+        elif self.driveMode == DriveModeStates.DRIVEMODE_NORMAL:
             command = self.optimizedDrive(carstate)
+        elif self.driveMode == DriveModeStates.DRIVEMODE_OVERTAKE:
         elif  self.driveMode == 2:
             command = self.recoverDrive(carstate)
         else:
             command = self.overtakeDrive(carstate)
+        elif self.driveMode == DriveModeStates.DRIVEMODE_FOLLOW:
+            command = self.followDrive(carstate)
         _logger.info('driveMode: {}'.format(self.driveMode))
+        _logger.info('distanceToFront: {}'.format(distanceToFront))
         return command
 
     def overtakeDrive(self, carstate: State) -> Command:
-        bCanOvertake, distance_to_go = self.overtakelist.canOvertake(carstate.distance_from_start)
+        """overtake mode"""
+        bCanOvertake, distanceToGo, brakedist = self.overtakelist.canOvertake(carstate.distance_from_start)
+
+        if self.overtakeState == OvertakeStates.INIT_OVERTAKE:
+            self.overtakeState = OvertakeStates.START_OVERTAKE
 
         _logger.info('bCanOvertake: {}'.format(bCanOvertake))
+        _logger.info('distanceToGo: {}'.format(distanceToGo))
+        _logger.info('overtakeState: {}'.format(self.overtakeState))
 
-        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        if bCanOvertake:
-            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0.8, T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.8, k_p_center=1, k_i_center=0.02, k_d_center=0)
-        return None
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start)
+
+        if self.overtakeState == OvertakeStates.START_OVERTAKE:
+            self.overtakeState = OvertakeStates.IN_OVERTAKE
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=300, K_acc=1.0,
+                                   T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.3, k_p_center=1, k_i_center=0.02,
+                                   k_d_center=0)
+        elif self.overtakeState == OvertakeStates.IN_OVERTAKE:
+            if distanceToGo < brakedist:
+                self.overtakeState = OvertakeStates.END_OVERTAKE
+                return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0.8,
+                                       T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.0, k_p_center=1, k_i_center=0.02,
+                                       k_d_center=0)
+
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=300, K_acc=1.0,
+                                   T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.3, k_p_center=1, k_i_center=0.02,
+                                   k_d_center=0)
+
+        elif self.overtakeState == OvertakeStates.END_OVERTAKE:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0.8,
+                                   T_acc=20, K_brake=0.8, T_brake=20, center_dist=0.0, k_p_center=1, k_i_center=0.02,
+                                   k_d_center=0)
+            self.driveMode = DriveModeStates.DRIVEMODE_NORMAL
         pass
 
     def optimizedDrive(self, carstate: State) -> Command:
-        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        """normal drive mode"""
+
+        _logger.info('distances: {}'.format(carstate.distances_from_edge))
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start)
         return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def recoverDrive(self, carstate: State) -> Command:
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
         return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=max(30,sqrt(carstate.speed_x**2+carstate.speed_y**2)-1)    , K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        pass
+
+    def followDrive(self, carstate: State) -> Command:
+        """normal drive mode"""
+
+        distanceToFront = self.oponents.dist_to_car(Area.FRONT)
+        pidResult = self.pid_distanceToOpponent.control(distanceToFront, 5)
+
+        if pidResult < 0:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=100, K_acc=0.8, T_acc=5, K_brake=0.5, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        else:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=100, K_acc=0.5, T_acc=5,
+                                   K_brake=0.8, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02,
+                                   k_d_center=0)
+
+        _logger.info('distanceToFront: {}'.format(distanceToFront))
+        _logger.info('pidResult: {}'.format(pidResult))
+
         pass
 
     def startDrive(self, carstate: State) -> Command:
