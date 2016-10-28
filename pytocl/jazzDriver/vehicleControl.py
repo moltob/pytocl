@@ -5,7 +5,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 TRACK_WIDTH = 12
-DISTANCE_EMERGENCY_BRAKE = 12
+DISTANCE_EMERGENCY_BRAKE = 13
 SAFE_CORNERING_SPEED = 50
 
 class VehicleControl:
@@ -37,15 +37,15 @@ class VehicleControl:
             if(radwinkel < 1):
                 accel = 1
             elif (radwinkel < 2):
-                accel = .9
+                accel = 1
             elif(radwinkel < 3):
-                accel = .8
+                accel = .9
             elif(radwinkel < 4):
-                accel = .7
+                accel = .8
             elif(radwinkel < 5):
-                accel = .6
+                accel = .7
             else:
-                accel = .5
+                accel = .6
         VehicleControl.saturate(accel, 0, 1)
         return accel
 
@@ -56,13 +56,13 @@ class VehicleControl:
         elif (radwinkel < 4):
             decel = 1
         elif(radwinkel < 6):
-            decel = .9
+            decel = 1
         elif(radwinkel < 8):
-            decel = .9
+            decel = 1
         elif(radwinkel < 10):
-            decel = .8
+            decel = 1
         else:
-            decel = .7
+            decel = 1
         VehicleControl.saturate(decel, 0, 1)
         return decel
 
@@ -76,34 +76,33 @@ class VehicleControl:
             self.gear = carstate.gear - 1
 
     def isOffroad(self, carstate: State):
-        #isOffRoad = (carstate.distance_from_center > ((TRACK_WIDTH/2)-2) )
         isOffRoad = not carstate.distances_from_egde_valid
         if(isOffRoad):
             _logger.info('####################################################### offroad ##########################################')
         return isOffRoad
 
     def getEmergencyBrakeDistance(self, carstate: State):
-        return carstate.speed_x / 1.5   #1.7 auch ok aber wackelig
+        return carstate.speed_x / 1.3   #1.7 auch ok aber wackelig
 
 
     def get_max_grippy_speed(self, a_radwinkel, carstate:State, target: Coordinate):
         radwinkel = abs(a_radwinkel)
         if( self.isOffroad(carstate)):
-            speed_mph = 5
+            speed_mph = 10
         else:
              if (target.distance < self.getEmergencyBrakeDistance(carstate)):
                  speed_mph = SAFE_CORNERING_SPEED
              else:
                  if(radwinkel < 1):
-                    speed_mph = 300
+                    speed_mph = 140
                  elif (radwinkel < 2):
-                    speed_mph = 200
+                    speed_mph = 130
                  elif(radwinkel < 3):
                     speed_mph = 120
                  elif(radwinkel < 4):
-                    speed_mph = 80
+                    speed_mph = 70
                  elif(radwinkel < 5):
-                    speed_mph = 50
+                    speed_mph = 60
                  else:
                     speed_mph = SAFE_CORNERING_SPEED
 
@@ -147,7 +146,7 @@ class VehicleControl:
         radwinkel = self.calc_radwinkel(wanted_zielwinkel_in_current_invokation)
 
         #ignore small radwinkel at low speed
-        if(carstate.speed_x < 10 and abs(radwinkel) < 2 and target.distance < 20):
+        if(carstate.speed_x < 20 and abs(radwinkel) < 2 and target.distance > 5):
             radwinkel = 0
 
         if( carstate.z > self.VehicleOverGroundStd + 0.04 and carstate.speed_x > 10):
@@ -167,6 +166,10 @@ class VehicleControl:
 
 
         lenkradwinkel = self.calc_lenkradwinkel(radwinkel)
+
+        #in offroad better not brake
+#        if(self.isOffroad(carstate)):
+#            required_brake_angle = 0
 
         #command object befüllen
         command.brake = required_brake_angle
@@ -194,6 +197,7 @@ class VehicleControl:
             # es gbt 2 fälle:
             # 1 Erreichen des Targetpoints
             # 2 Fahren in der Kurve
+#            radwinkel = 0   #todo: weg?
             required_brake_angle = self.calc_max_decel_angle(radwinkel, carstate.speed_x)
             required_accel_angle = 0
             _logger.info(
