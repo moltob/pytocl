@@ -17,14 +17,15 @@ class Acceleration:
             TrackParameter(160, 45), TrackParameter(180, MAX_VELOCITY_MS),
             TrackParameter(370, 25), TrackParameter(450, 26),
             TrackParameter(500, MAX_VELOCITY_MS),
-            TrackParameter(700, 28), TrackParameter(750, MAX_VELOCITY_MS),
-            TrackParameter(950, 28), TrackParameter(1000, MAX_VELOCITY_MS),
-            TrackParameter(1400, 30), TrackParameter(1500, MAX_VELOCITY_MS),
+            TrackParameter(700, 30), TrackParameter(750, MAX_VELOCITY_MS),
+            TrackParameter(950, 35), TrackParameter(1000, MAX_VELOCITY_MS),
+            TrackParameter(1400, 33), TrackParameter(1500, MAX_VELOCITY_MS),
             TrackParameter(1870, 30), TrackParameter(1950, MAX_VELOCITY_MS),
-            TrackParameter(2320, 33),
-            TrackParameter(2410, 20), TrackParameter(2490, MAX_VELOCITY_MS),
-            TrackParameter(2650, 33), TrackParameter(2750, MAX_VELOCITY_MS),
-            TrackParameter(2920, 28), TrackParameter(3050, MAX_VELOCITY_MS),
+            TrackParameter(2320, 24),
+            TrackParameter(2410, 20), TrackParameter(2490, 24),
+            TrackParameter(2550, 28),
+            TrackParameter(2600, 35), TrackParameter(2650, MAX_VELOCITY_MS),
+            TrackParameter(2920, 35), TrackParameter(3050, MAX_VELOCITY_MS),
             TrackParameter(3210, 13), TrackParameter(3260, MAX_VELOCITY_MS)]
 
     def setTargetVelocity(self, carstate):
