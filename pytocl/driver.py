@@ -226,7 +226,7 @@ class Driver:
 
         _logger.info('distances: {}'.format(carstate.distances_from_edge))
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start)
-        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0.5, T_acc=5, K_brake=0.5, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def followDrive(self, carstate: State) -> Command:
@@ -235,10 +235,16 @@ class Driver:
         distanceToFront = self.oponents.dist_to_car(Area.FRONT)
         pidResult = self.pid_distanceToOpponent.control(distanceToFront, 5)
 
+        if pidResult < 0:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=100, K_acc=0.8, T_acc=5, K_brake=0.5, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        else:
+            return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=100, K_acc=0.5, T_acc=5,
+                                   K_brake=0.8, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02,
+                                   k_d_center=0)
+
         _logger.info('distanceToFront: {}'.format(distanceToFront))
         _logger.info('pidResult: {}'.format(pidResult))
 
-        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=100, K_acc=0.5, T_acc=5, K_brake=0.5, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def startDrive(self, carstate: State) -> Command:
