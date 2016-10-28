@@ -14,8 +14,8 @@ class Acceleration:
         self.targetVelocity = 22
         self.targetTrackVelocity = [
             TrackParameter(0, MAX_VELOCITY_MS),
-            TrackParameter(160, 60), TrackParameter(180, MAX_VELOCITY_MS),
-            TrackParameter(365, 23), TrackParameter(450, 24),
+            TrackParameter(160, 65), TrackParameter(180, MAX_VELOCITY_MS),
+            TrackParameter(360, 23), TrackParameter(450, 24),
             TrackParameter(500, MAX_VELOCITY_MS),
             TrackParameter(700, 28), TrackParameter(750, MAX_VELOCITY_MS),
             TrackParameter(970, 35), TrackParameter(1000, MAX_VELOCITY_MS),
@@ -24,11 +24,11 @@ class Acceleration:
             #Schikane
             TrackParameter(2320, 45), TrackParameter(2330, 38),
             TrackParameter(2410, 20), TrackParameter(2490, 28),
-            TrackParameter(2520, 33),
+            TrackParameter(2520, 36),
             TrackParameter(2590, 36), TrackParameter(2670, MAX_VELOCITY_MS),
             TrackParameter(2920, 35), TrackParameter(2980, MAX_VELOCITY_MS),
             TrackParameter(3200, 22),
-            TrackParameter(3220, 15), TrackParameter(3270, MAX_VELOCITY_MS)]
+            TrackParameter(3225, 15), TrackParameter(3270, MAX_VELOCITY_MS)]
 
     def setTargetVelocity(self, carstate):
         self.targetVelocity = MAX_VELOCITY_MS
