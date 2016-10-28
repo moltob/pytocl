@@ -13,7 +13,7 @@ class JazzDriver:
         self.data_logger = DataLogWriter() if logdata else None
         self.accelerator = 0.0
         self.trajectoryPlanner = TrajectoryPlanner()
-        self.vehicleControl = VehicleControl2()
+        self.vehicleControl = VehicleControl()
 
     def on_shutdown(self):
         """Server requested driver shutdown.
