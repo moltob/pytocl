@@ -104,9 +104,11 @@ class Dynamic:
     def accelerate(self, speed, carstate : State):
         if carstate.distance_from_start < 100 or carstate.distance_from_start > 3580:
             self.accelerator = 1
-            print("Dist: " + str(carstate.distance_from_start))
+            #print("Dist: " + str(carstate.distance_from_start))
         elif (speed > carstate.speed_x):
-            if abs(carstate.speed_y) > carstate.speed_x+5:
+            if abs(carstate.speed_y) > carstate.speed_x+10:
+                self.accelerator = -0.5
+            elif abs(carstate.speed_y) > carstate.speed_x+5:
                 self.accelerator = 0
             else:
                 if self.accelerator < 0.5:
@@ -116,5 +118,5 @@ class Dynamic:
         else:
             self.accelerator = 0
 
-        print( "acc: " + str(self.accelerator))
+        #print( "acc: " + str(self.accelerator))
 
