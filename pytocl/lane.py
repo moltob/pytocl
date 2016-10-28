@@ -31,13 +31,12 @@ class Lane:
         max_idx = -1
 
         if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
-            print('***************')
-            if carstate.speed_x < 10 \
-                    and ((carstate.distance_from_center < 0 and 10 < carstate.angle < 170) or (carstate.distance_from_center > 0 and -10 > carstate.angle > -170)):
+            print('***************  ' + str(carstate.speed_x))
+            if carstate.speed_x < 5 \
+                    and ((carstate.distance_from_center < 0 and 20 < carstate.angle < 160) or (carstate.distance_from_center > 0 and -20 > carstate.angle > -160)):
                 Lane.backwards = True
                 print('Set to backwards to True')
-            elif carstate.speed_x >= 20:
-                Lane.backwards = False
+
 
 
             print('distance_from_edge: {}'.format(carstate.distances_from_edge))
