@@ -18,6 +18,6 @@ class Accelerator:
             acceleration = -1
 
         if min(state.wheel_velocities) == 0.0 and acceleration == -1:
-            acceleration = -0.5
+            acceleration = 0.5
 
         return acceleration

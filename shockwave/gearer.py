@@ -6,6 +6,8 @@ _logger = logging.getLogger(__name__)
 
 class Gearer:
     def __init__(self, plan):
+        self.emergency = False
+        self.emergencyCounter = 0
         self.plan = plan
 
     def get_gear(self, state: State):
@@ -19,5 +21,15 @@ class Gearer:
             gear = state.gear - 2
         elif state.rpm < 2000 and state.gear > 1:
             gear = state.gear - 1
+
+        if (state.distances_from_egde_valid) and state.speed_x == 0 and plan.get_desired_speed() > 0:
+            self.emergency = True
+
+        if (self.emergency == True):
+            self.emergencyCounter += 1
+            gear = -1
+            if self.emergencyCounter > 10:
+                self.emergency = False
+                self.emergencyCounter = 0
 
         return gear
