@@ -14,8 +14,7 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
-
-    CURVE_DETECTION_THRESHOLD = 48
+    CURVE_DETECTION_THRESHOLD = 50
 
     def __init__(self, logdata=True):
         self.data_logger = DataLogWriter() if logdata else None
@@ -28,6 +27,7 @@ class Driver:
         self.prev_dist_from_edge_mitte = 0.0
         self.brake_begin = False
         self.brake_begin_consumed = False
+        self.outside_track = False
 
     @property
 
@@ -72,29 +72,44 @@ class Driver:
 
     def control_steering_angle (self, carstate: State, command: Command):
 
-        self.currentAngleCorr = (carstate.angle / 21)
+        if self.outside_track == False:
+            # korrektur zum aktuellen Winkel
+            self.currentAngleCorr = (carstate.angle / 21)
 
-        # korrektur zum zentrum
-        if (carstate.distance_from_center > 0.1  and self.currentAngleCorr < 1):
-            self.currentAngleCorr -= 0.2
-        elif (carstate.distance_from_center < -0.1 and self.currentAngleCorr > -1):
-            self.currentAngleCorr += 0.2
+            # korrektur zum zentrum
+            if (carstate.distance_from_center > 0.1  and carstate.distance_from_center <= 1):
+                self.currentAngleCorr -= 0.2
+            elif (carstate.distance_from_center < -0.1 and carstate.distance_from_center >= -1):
+                self.currentAngleCorr += 0.2
 
-        dist_left = (carstate.distances_from_edge[6] + carstate.distances_from_edge[7] + carstate.distances_from_edge[8])/3
-        dist_right = (carstate.distances_from_edge[10] + carstate.distances_from_edge[11] + carstate.distances_from_edge[12])/3
-        dist_centre = carstate.distances_from_edge[9]
+            dist_left = (carstate.distances_from_edge[6] + carstate.distances_from_edge[7] + carstate.distances_from_edge[8])/3
+            dist_right = (carstate.distances_from_edge[10] + carstate.distances_from_edge[11] + carstate.distances_from_edge[12])/3
+            dist_centre = carstate.distances_from_edge[9]
 
-        if (dist_centre > dist_left and dist_centre > dist_right):
-            self.currentAngleCorr += 0.0
-        elif (dist_left > dist_right):
-            self.currentAngleCorr += 0.25
-        else:
-            self.currentAngleCorr -= 0.25
+            if (dist_centre > dist_left and dist_centre > dist_right):
+                self.currentAngleCorr += 0.0
+            elif (dist_left > dist_centre and dist_centre > dist_right):
+                # left turn ahead
+                self.currentAngleCorr += 0.25
+            elif (dist_left < dist_centre and dist_centre < dist_right):
+                # right turn ahead
+                self.currentAngleCorr -= 0.25
+            elif (dist_left > dist_right):
+                self.currentAngleCorr += 0.2
+            else:
+                self.currentAngleCorr -= 0.2
 
-        command.steering = self.currentAngleCorr
+            # normalize to range
+            if (self.currentAngleCorr < -1.0):
+                self.currentAngleCorr = -1.0
+            elif (self.currentAngleCorr > 1.0):
+                self.currentAngleCorr = 1.0
+
+            command.steering = self.currentAngleCorr
 
 
     def control_target_velocity (self, carstate: State):
+
 
         dist_from_edge_mitte = (carstate.distances_from_edge[7] +
                                 carstate.distances_from_edge[8] +
@@ -102,71 +117,106 @@ class Driver:
                                 carstate.distances_from_edge[10] +
                                 carstate.distances_from_edge[11]) / 5
 
-        #print("dist edge mitte" + str(dist_from_edge_mitte))
+            #print("dist edge mitte" + str(dist_from_edge_mitte))
 
-#        self.target_velocity = carstate.speed_x * KMH_PER_MPS
-        current_velocity_kmh =  carstate.speed_x * KMH_PER_MPS
+        if self.outside_track == False:
+            #        self.target_velocity = carstate.speed_x * KMH_PER_MPS
+            current_velocity_kmh =  carstate.speed_x * KMH_PER_MPS
 
+            if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD * (current_velocity_kmh / 150)):
 
-        if (dist_from_edge_mitte < self.CURVE_DETECTION_THRESHOLD * (current_velocity_kmh / 150)):
+                print(carstate.speed_y*KMH_PER_MPS)
 
-            print(carstate.speed_y*KMH_PER_MPS)
+                # if leaving turn
+                if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
+                        self.target_velocity += (18 -(abs(carstate.speed_y)*KMH_PER_MPS*2))
 
-            # if leaving turn
-            if (self.prev_dist_from_edge_mitte < dist_from_edge_mitte):
-                    self.target_velocity += (20 -(abs(carstate.speed_y)*KMH_PER_MPS*2))
-
-            else:
-                if (self.brake_begin_consumed == False) :
-                    self.target_velocity = current_velocity_kmh - 20
-                    self.brake_begin_consumed = True
                 else:
-                    self.target_velocity -= 10
+                    if (self.brake_begin_consumed == False) :
+                        self.target_velocity = current_velocity_kmh - 20
+                        self.brake_begin_consumed = True
+                    else:
+                        self.target_velocity -= 10
 
-        elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
-            self.brake_begin_consumed = False
-            self.target_velocity = 100
+            elif dist_from_edge_mitte >= self.CURVE_DETECTION_THRESHOLD:
+                self.brake_begin_consumed = False
+                self.target_velocity = 250
 
-        if self.target_velocity < 70:
-            self.target_velocity = 70;
+            if self.target_velocity < 65:
+                self.target_velocity = 65;
+
+        else:
+            self.target_velocity = 50
 
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
 
     def control_opponents_backwards (self, carstate: State, command: Command):
 
-        for i in [0, 1, 2, 3, 4, 5, 6, 30, 31, 32, 33, 34, 35]:
-            if (carstate.opponents[i] < 190):
-                print (str(i) + ": "+ str(carstate.opponents[i]))
+        if self.outside_track == False:
+            for i in [0, 1, 2, 3, 4, 5, 6, 30, 31, 32, 33, 34, 35]:
+                if (carstate.opponents[i] < 190):
+                    print (str(i) + ": "+ str(carstate.opponents[i]))
 
-        opponent_detection_left = 0
-        opponent_detection_right = 0
+            opponent_detection_left = 0
+            opponent_detection_right = 0
 
-        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_left > carstate.opponents[i])) or (opponent_detection_left == 0)):
-                opponent_detection_left = carstate.opponents[i]
+            for i in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+                if ((carstate.opponents[i] < 20) and ((opponent_detection_left > carstate.opponents[i])) or (opponent_detection_left == 0)):
+                    opponent_detection_left = carstate.opponents[i]
 
-        for i in [28, 29, 30, 31, 32, 33, 34, 35]:
-            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i]))or (opponent_detection_right == 0)):
-                opponent_detection_right = carstate.opponents[i]
+            for i in [28, 29, 30, 31, 32, 33, 34, 35]:
+                if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i]))or (opponent_detection_right == 0)):
+                    opponent_detection_right = carstate.opponents[i]
 
-        if (opponent_detection_left < 20 or  opponent_detection_right < 20):
+            if (opponent_detection_left < 20 or  opponent_detection_right < 20):
 
-            if (opponent_detection_left > opponent_detection_right):
-                command.steering -= 0.3
-                command.steering = max(-1, command.steering)
-                print("RIGHT")
-            else:
-                command.steering += 0.3
-                command.steering = min (1, command.steering)
-                print ("LEFT")
+                if (opponent_detection_left > opponent_detection_right):
+                    command.steering -= 0.3
+                    command.steering = max(-1, command.steering)
+                    print("RIGHT")
+                else:
+                    command.steering += 0.3
+                    command.steering = min (1, command.steering)
+                    print ("LEFT")
 
 
     def select_steering(self, carstate: State, command: Command):
 
+        self.checkOutsideTrack(carstate, command)
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
         self.control_opponents_backwards (carstate, command)
+
+
+    def checkOutsideTrack(self, carstate: State, command: Command):
+        self.outside_track = False
+
+        #prev_angle_corr = self.currentAngleCorr
+        self.currentAngleCorr = (carstate.angle / 21)
+
+        # korrektur weil ausserhalb der strecke
+        if (carstate.distance_from_center > 1):
+            # left outside
+            self.outside_track = True
+            if (carstate.angle >= 90):
+                self.currentAngleCorr = 1
+            else:
+                self.currentAngleCorr = -1
+        elif (carstate.distance_from_center < -1):
+            # right outside
+            self.outside_track = True
+            if (carstate.angle <= -90):
+                self.currentAngleCorr = -1
+            else:
+                self.currentAngleCorr = 1
+
+        if (self.currentAngleCorr < -1.0):
+            self.currentAngleCorr = -1.0
+        elif (self.currentAngleCorr > 1.0):
+            self.currentAngleCorr = 1.0
+
+        command.steering = self.currentAngleCorr
 
 
     def select_acceleration(self, carstate: State, command: Command):
