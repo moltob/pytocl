@@ -36,6 +36,8 @@ class Lane:
                     and ((carstate.distance_from_center < 0 and 10 < carstate.angle < 170) or (carstate.distance_from_center > 0 and -10 > carstate.angle > -170)):
                 Lane.backwards = True
                 print('Set to backwards to True')
+            elif carstate.speed_x >= 20:
+                Lane.backwards = False
 
 
             print('distance_from_edge: {}'.format(carstate.distances_from_edge))
