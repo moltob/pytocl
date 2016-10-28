@@ -46,29 +46,32 @@ class Lane:
             print(self.ang)
             return
 
-        print (Lane.backwards)
-        if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
-            if Lane.backwards == True:
-                self.ang = 0
-                self.vel = -10
-                #Lane.backcnt -= 1
-            elif carstate.speed_x < 3:
-                Lane.backwards = True
-                self.ang = 0
-                self.vel = -10
-            else:
-                self.vel = 10
-                print('***************')
-                print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle)+ ' --- ' + str(carstate.speed_x))
-                #print (carstate.distances_from_edge)
-                print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
-                if carstate.distance_from_center < 0:
-                    self.ang = -30 - carstate.angle
-                else:
-                    self.ang = 30 - carstate.angle
 
-                print (self.vel)
-                print (self.ang)
+        if carstate.distances_from_edge[0] == -1 and carstate.distances_from_edge[18] == -1 and carstate.distances_from_edge[9] == -1:
+            print('***************')
+            if carstate.speed_x < 10 \
+                    and (carstate.distance_from_center < 0 and 10 < carstate.angle < 170) \
+                    and (carstate.distance_from_center > 0 and -10 > carstate.angle > -170):
+                Lane.backwards = True
+                print('Set to backwards to True')
+
+
+            print('distance_from_edge: {}'.format(carstate.distances_from_edge))
+            self.vel = 10
+            print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle)+ ' --- ' + str(carstate.speed_x))
+            #print (carstate.distances_from_edge)
+            print(str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
+            if carstate.distance_from_center < 0:
+                self.ang = -30 - carstate.angle
+            else:
+                self.ang = 30 - carstate.angle
+
+            if Lane.backwards == True:
+                self.vel = -10
+
+            print('Direction: ' + str(Lane.backwards))
+            print (self.vel)
+            print (self.ang)
             return
         else:
             print('==> ' + str(carstate.distance_from_center) + ' --- ' + str(carstate.angle))
