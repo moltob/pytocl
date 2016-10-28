@@ -24,7 +24,8 @@ class Pid:
 
 
 class Curve:
-    def __init__(self, startPoint, endPoint, speed, relativePos):
+    def __init__(self,breakPoint, startPoint, endPoint, speed, relativePos):
+        self.bp = breakPoint
         self.sp = startPoint
         self.ep = endPoint
         self.spe = speed
@@ -41,6 +42,9 @@ class Curve:
 
     def relativePosition(self):
         return self.relPos
+
+    def getBreakPoint(self):
+        return self.bp
 
 class Driver:
     """Driving logic.
@@ -89,43 +93,43 @@ class Driver:
         self.currentCurveIndex = 0
         
 
-        #c0 = Curve(100, 150, 150)
+        #c0 = Curve(100, 120,  150, 250, 0.8)
         #self.curves.append(c0)
 
-        c1_a = Curve(350, 400, 80, -0.8)
+        c1_a = Curve(360, 380, 500, 110, -0.8)
         self.curves.append(c1_a)
 
         #c1_b = Curve(450, 500, 80)
         #self.curves.append(c1_b)
 
-        c2 = Curve(700, 750, 100, 0.8)
+        c2 = Curve(700, 720, 810, 110, 0.8)
         self.curves.append(c2)
 
-        c3 = Curve(970, 1000, 150, 0.8)
+        c3 = Curve(950, 980, 1100, 180, 0.8)
         self.curves.append(c3)
 
-        c4 = Curve(1450, 1500, 145, -0.8)
+        c4 = Curve(1430, 1450, 1600, 160, -0.8)
         self.curves.append(c4)
 
-        c5 = Curve(1880, 1940, 120, -0.8)
+        c5 = Curve(1860, 1880, 1940, 200, -0.8)
         self.curves.append(c5)
 
-        #c6pre = Curve(2300, 2350, 150)
-        #self.curves.append(c6pre)
+        c6pre = Curve(2300, 2320, 2380, 130, 0.8)
+        self.curves.append(c6pre)
 
         #c6pre2 = Curve(2350, 2400, 120)
         #self.curves.append(c6pre2)
 
-        c6 = Curve(2400, 2500, 70, 0.8)
+        c6 = Curve(2400, 2415, 2500, 80, -0.8)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2650, 125, -0.8)
+        c7 = Curve(2600, 2650, 2800, 150, -0.8)
         self.curves.append(c7)
 
-        c8 = Curve(2900, 2950, 140, 0.8)
+        c8 = Curve(2830, 2910, 3030, 165, 0.8)
         self.curves.append(c8)
 
-        c9 = Curve(3200, 3285, 70, -0.8)
+        c9 = Curve(3200, 3230, 3285, 70, -0.8)
         self.curves.append(c9)
 
 
@@ -160,7 +164,12 @@ class Driver:
             curve = curve + 1
             start = c.startPoint()
             end = c.endPoint()
-            if (trackDistance > start and trackDistance < end):
+            breakPoint = c.getBreakPoint()
+            if(trackDistance > breakPoint and trackDistance < start):
+                if( self.currentDriveState.destSpeedMs != c.speedKmh()* MPS_PER_KMH):
+                    self.currentDriveState.destSpeedMs = c.speedKmh() * MPS_PER_KMH
+                    print("Breaking to " + str(c.speedKmh()))
+            elif (trackDistance > start and trackDistance < end):
                 isInCurve = True
                 self.currentCurveIndex = cIndex
 
@@ -235,7 +244,7 @@ class Driver:
 
 class DriveState:
     def __init__(self):
-        self.speed_SetPoint_ms = 300 * MPS_PER_KMH
+        self.destSpeedMs = 300 * MPS_PER_KMH
         self.dt = 0.020
         self.pidSpeed = Pid()
         self.pidAngle = Pid()
@@ -247,8 +256,8 @@ class DriveStateStraight(DriveState):
     def __init__(self, destOffset):
         super().__init__()
         #distCenterKp = 10.0
-        self.distCenterKp = 2.5
-        self.distCenterKd = 4
+        self.distCenterKp = 0.3
+        self.distCenterKd = 0
         self.distCenterKi = 0.0 #10.0
 
         self.speedKp = 15.0
@@ -256,15 +265,15 @@ class DriveStateStraight(DriveState):
         self.speedKi = 0.0
 
         #angleKp = 0.07
-        self.angleKp = 0.03
-        self.angleKd = 0.01 #0.02
-        self.angleKi = 0.0
+        self.angleKp = 0.1#0.03
+        self.angleKd = 0#0.01 #0.02
+        self.angleKi = 0#0.0
 
         self.destDistanceOffset = destOffset
 
     def drive(self, carstate):
-        speed_SetPoint_ms = 350 * MPS_PER_KMH
-        self.speedSetPoint = speed_SetPoint_ms
+        #speed_SetPoint_ms = 350 * MPS_PER_KMH
+        #self.speedSetPoint = speed_SetPoint_ms
 
         distFromCenter = carstate.distance_from_center
         speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
@@ -273,7 +282,7 @@ class DriveStateStraight(DriveState):
 
         cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
         cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, self.dt, self.angleKp, self.angleKd, self.angleKi)
-        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
 
         cmdSteering = cmdDistCenter - cmdAngle
 
@@ -305,8 +314,8 @@ class DriveStateCurve(DriveState):
         self.directions = directions
 
     def drive(self, carstate):
-        speed_SetPoint_ms = self.speed_SetPoint_ms * MPS_PER_KMH
-        self.speedSetPoint = speed_SetPoint_ms
+        #speed_SetPoint_ms = self.speed_SetPoint_ms * MPS_PER_KMH
+        #self.speedSetPoint = speed_SetPoint_ms
 
         distFromCenter = carstate.distance_from_center
         speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
@@ -318,7 +327,7 @@ class DriveStateCurve(DriveState):
 
         #cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
         cmdAngle = self.pidAngle.calc(self.angle_SetPoint, newAngle, self.dt, self.angleKp, self.angleKd, self.angleKi)
-        cmdAccelerator = self.pidSpeed.calc(speed_SetPoint_ms, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
 
         cmdSteering = -cmdAngle
 
