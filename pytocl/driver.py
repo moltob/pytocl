@@ -126,7 +126,7 @@ class Driver:
         self.prev_dist_from_edge_mitte = dist_from_edge_mitte
 
 
-    def show_opponents (self, carstate: State, command: Command):
+    def control_opponents_backwards (self, carstate: State, command: Command):
 
         for i in [0, 1, 2, 3, 4, 5, 6, 30, 31, 32, 33, 34, 35]:
             if (carstate.opponents[i] < 190):
@@ -154,11 +154,12 @@ class Driver:
                 command.steering = min (1, command.steering)
                 print ("LEFT")
 
+
     def select_steering(self, carstate: State, command: Command):
 
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
-        self.show_opponents (carstate, command)
+        self.control_opponents_backwards (carstate, command)
 
 
     def select_acceleration(self, carstate: State, command: Command):
