@@ -58,10 +58,17 @@ class Driver:
         if carstate.rpm > 9500 and carstate.gear < 6:
             #_logger.info('switching up')
             command.gear = carstate.gear + 1
-        elif carstate.rpm < 4000 and carstate.gear > 1:
+        elif carstate.rpm < 4000 and carstate.gear > 2:
+            #_logger.info('switching down')
+            command.gear = carstate.gear - 1
+        elif carstate.rpm < 3000 and carstate.gear > 1:
             #_logger.info('switching down')
             command.gear = carstate.gear - 1
 
+    def getTrajectoryOfOpponent(self, distance, angle) -> float :
+        import math
+        xDistance = math.cos(angle) * distance
+        return xDistance
 
     def control_steering_angle (self, carstate: State, command: Command):
 
