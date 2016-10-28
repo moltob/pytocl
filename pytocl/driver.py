@@ -62,10 +62,10 @@ class Driver:
         self.accelerator = min(1, self.accelerator)
         self.accelerator = max(-1, self.accelerator)
         command.accelerator = self.accelerator
-        _logger.info('accelerator: {}'.format(command.accelerator))
+#        _logger.info('accelerator: {}'.format(command.accelerator))
 
         # gear shifting:
-        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
+#        _logger.info('rpm, gear: {}, {}'.format(carstate.rpm, carstate.gear))
         command.gear = carstate.gear or 1
         if carstate.rpm > 7000 and carstate.gear < 6:
             _logger.info('switching up')
