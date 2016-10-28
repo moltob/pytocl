@@ -22,7 +22,7 @@ class Gearer:
         elif state.rpm < 2000 and state.gear > 1:
             gear = state.gear - 1
 
-        if (not state.distances_from_egde_valid) and state.speed_x == 0 and self.plan.get_desired_speed() > 0:
+        if (not state.distances_from_egde_valid) and state.speed_x < 1 and self.plan.get_desired_speed() > 0:
             self.emergency = True
 
         if (self.emergency == True):
