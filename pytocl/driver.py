@@ -123,7 +123,7 @@ class Driver:
         c6 = Curve(2400, 2415, 2500, 80, -0.8)
         self.curves.append(c6)
 
-        c7 = Curve(2600, 2650, 2800, 150, -0.8)
+        c7 = Curve(2600, 2630, 2800, 150, -0.8)
         self.curves.append(c7)
 
         c8 = Curve(2830, 2910, 3030, 165, 0.8)
@@ -159,27 +159,34 @@ class Driver:
         speed_SetPoint_kmh = 240.0
         curve = -1
         trackDistance = carstate.distance_from_start
-        isInCurve = False
-        for cIndex, c in enumerate(self.curves):
-            curve = curve + 1
-            start = c.startPoint()
-            end = c.endPoint()
-            breakPoint = c.getBreakPoint()
-            if(trackDistance > breakPoint and trackDistance < start):
-                if( self.currentDriveState.destSpeedMs != c.speedKmh()* MPS_PER_KMH):
-                    self.currentDriveState.destSpeedMs = c.speedKmh() * MPS_PER_KMH
-                    print("Breaking to " + str(c.speedKmh()))
-            elif (trackDistance > start and trackDistance < end):
-                isInCurve = True
-                self.currentCurveIndex = cIndex
+        isInKiesbett = abs(carstate.distance_from_center) > 1
 
-                if (type(self.currentDriveState) is not DriveStateCurve):
-                    self.currentDriveState = DriveStateCurve(c.speedKmh() * MPS_PER_KMH, self.directions)
-                    print('entered curve')
+        if not isInKiesbett:
+            isInCurve = False
+            for cIndex, c in enumerate(self.curves):
+                curve = curve + 1
+                start = c.startPoint()
+                end = c.endPoint()
+                breakPoint = c.getBreakPoint()
+                if(trackDistance > breakPoint and trackDistance < start):
+                    if( self.currentDriveState.destSpeedMs != c.speedKmh()* MPS_PER_KMH):
+                        self.currentDriveState.destSpeedMs = c.speedKmh() * MPS_PER_KMH
+                        print("Breaking to " + str(c.speedKmh()))
+                elif (trackDistance > start and trackDistance < end):
+                    isInCurve = True
+                    self.currentCurveIndex = cIndex
 
-        if(not isInCurve and type(self.currentDriveState) is not DriveStateStraight):
-            self.currentDriveState = DriveStateStraight(self.curves[(self.currentCurveIndex +1) % len(self.curves)].relativePosition())
-            print('entered straight')
+                    if (type(self.currentDriveState) is not DriveStateCurve):
+                        self.currentDriveState = DriveStateCurve(c.speedKmh() * MPS_PER_KMH, self.directions)
+                        print('entered curve')
+
+            if(not isInCurve and type(self.currentDriveState) is not DriveStateStraight):
+                self.currentDriveState = DriveStateStraight(self.curves[(self.currentCurveIndex +1) % len(self.curves)].relativePosition())
+                print('entered straight')
+
+        if(isInKiesbett and type(self.currentDriveState) is not DriveStateKiesbett):
+            self.currentDriveState = DriveStateKiesbett()
+            print('entered Kiesbett')
 
         if(curve != self.lastCurve):
             if(curve == 0):
@@ -338,5 +345,45 @@ class DriveStateCurve(DriveState):
             if(maxDistance != -1):
                 print('maxDistance' + str(maxDistance) + '\t angle: ' + str(newAngle))
 
+
+        return cmdSteering, cmdAccelerator
+
+
+
+class DriveStateKiesbett(DriveState):
+
+    def __init__(self):
+        super().__init__()
+        #distCenterKp = 10.0
+        self.distCenterKp = 2
+        self.distCenterKd = 2
+        self.distCenterKi = 0.0 #10.0
+
+        self.speedKp = 15.0
+        self.speedKd = 0.0
+        self.speedKi = 0.0
+
+        #angleKp = 0.07
+        self.angleKp = 0.07#0.1#0.03
+        self.angleKd = 0#0.01 #0.02
+        self.angleKi = 0#0.0
+
+        self.destDistanceOffset = 0
+        self.destSpeedMs =80 * MPS_PER_KMH
+
+    def drive(self, carstate):
+        #speed_SetPoint_ms = 350 * MPS_PER_KMH
+        #self.speedSetPoint = speed_SetPoint_ms
+
+        distFromCenter = carstate.distance_from_center
+        speed_ms = math.sqrt(carstate.speed_x**2 + carstate.speed_y**2 + carstate.speed_z**2)
+        trackDistance = carstate.distance_from_start
+
+
+        cmdDistCenter = self.pidDistCenter.calc(self.destDistanceOffset, distFromCenter, self.dt, self.distCenterKp, self.distCenterKd, self.distCenterKi)
+        cmdAngle = self.pidAngle.calc(self.angle_SetPoint, carstate.angle, self.dt, self.angleKp, self.angleKd, self.angleKi)
+        cmdAccelerator = self.pidSpeed.calc(self.destSpeedMs, speed_ms, self.dt, self.speedKp, self.speedKd, self.speedKi)
+
+        cmdSteering = cmdDistCenter - cmdAngle
 
         return cmdSteering, cmdAccelerator
