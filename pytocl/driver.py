@@ -23,12 +23,25 @@ class Driver:
         self.pid_dist = PID(0.5, 0.02, 0)
         self.pid_speed = PID(20, 0, 0)
         self.speedlist = SpeedList()
+        self.startUpAccelarations = SpeedList()
         self.overtakelist = OvertakeList()
-        self.createCorkScrewSpeedlist()
-        self.createOvertakeList()
         self.acc_counter = 0
         self.brake_counter = 0
         self.driveMode = 0
+        self.createCorkScrewSpeedlist()
+        self.createOvertakeList()
+        self.createStartupAccelerationsList()
+
+    def createStartupAccelerationsList(self):
+        self.startUpAccelarations.add(0, 0.3)
+        self.startUpAccelarations.add(10, 0.4)
+        self.startUpAccelarations.add(20, 0.5)
+        self.startUpAccelarations.add(40, 0.7)
+        self.startUpAccelarations.add(50, 0.8)
+        self.startUpAccelarations.add(50, 0.8)
+        self.startUpAccelarations.add(70, 1.0)
+        #self.startUpAccelarations.add(60, 0.8)
+        #self.startUpAccelarations.add(70, 1.0)
 
     def createCorkScrewSpeedlist(self):
         self.speedlist.add(20, 200)
@@ -96,8 +109,7 @@ class Driver:
 
     def createOvertakeList(self):
         #self.overtakelist.add(0.5, 0, 250)
-        #self.overtakelist.add(0.5, 1550, 1900)
-        pass
+        self.overtakelist.add(0.5, 1550, 1900)
 
     @property
     def range_finder_angles(self):
@@ -153,11 +165,15 @@ class Driver:
         pass
 
     def startDrive(self, carstate: State) -> Command:
-        if carstate.distance_raced > 25 and self.driveMode == 0:
+        """optimized code for startup behaviour"""
+
+        if carstate.distance_raced > 80 and self.driveMode == 0:
             self.driveMode = 1
 
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        return self.controlCar(carstate, over_steer=True, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        acceleration = self.startUpAccelarations.getSpeedForDistance(carstate.distance_from_start)
+        _logger.info('acceleration: {}'.format(acceleration))
+        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=acceleration, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def controlCar(self, carstate: State, over_steer, oversteer_angle, tar_speed, K_acc, T_acc, K_brake, T_brake, center_dist, k_p_center, k_i_center, k_d_center) -> Command:
