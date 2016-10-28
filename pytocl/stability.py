@@ -9,6 +9,7 @@ class StabilityController:
         self.gb_controller = GearboxController(1)
         self.steering_controller = SteeringController()
         self.velocity_controller = VelocityController()
+        self.lastgear = 0
 
     def control(self, target_speed, target_pos, car_state: State):
         command = Command()
@@ -16,10 +17,13 @@ class StabilityController:
         command.gear = self.gb_controller.control(car_state.rpm, car_state.gear)
 
         command.steering = self.steering_controller.control(target_pos, car_state.angle, car_state.distance_from_center)
-
+        if command.gear != self.lastgear:
+            geardown = True
+        else:
+            geardown = False
         (command.accelerator, command.brake) = self.velocity_controller.control(target_speed,
-                                                                                car_state.speed_x)
-
+                                                                                car_state.speed_x, geardown)
+        self.lastgear = command.gear
         return command
 
 
@@ -30,11 +34,13 @@ class GearboxController:
     def control(self, rpm, gear):
         # gear shifting:
         self.gear_control = gear or 1
-        if rpm > 8300 and gear < 6:
+        if rpm > 9000 and gear < 6:
             #_logger.info('switching up')
             self.gear_control = gear + 1
-        elif rpm < 4000 and gear > 1:
+        elif rpm < 4000 and gear > 2:
             #_logger.info('switching down')
+            self.gear_control = gear - 1
+        elif rpm < 3100 and gear > 1:
             self.gear_control = gear - 1
 
         #_logger.info('GearboxController: rpm, gear, gear_control: {}, {}, {}'.format(rpm, gear, self.gear_control))
@@ -59,12 +65,20 @@ class VelocityController:
         self.accelerator = 0.0
         self.brake = 0.0
 
-    def control(self, target_speed_x, current_speed_x):
+    def control(self, target_speed_x, current_speed_x, geardown):
         # basic acceleration to target speed:
         speed_diff = target_speed_x * MPS_PER_KMH - current_speed_x
         if speed_diff > 0:
-            self.accelerator = 1.0
+            if self.accelerator < 0.7 and current_speed_x < 25:
+                self.accelerator += 0.1
+                self.accelerator = max(0.3, self.accelerator)
+            elif geardown:
+                self.accelerator = 0.5
+            else:
+                self.accelerator = 1.0
+
             self.brake = 0.0
+
         else:
             self.accelerator = 0.0
             self.brake = -speed_diff * 0.1
