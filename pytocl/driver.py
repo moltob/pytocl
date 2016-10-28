@@ -109,7 +109,8 @@ class Driver:
 
     def createOvertakeList(self):
         #self.overtakelist.add(0.5, 0, 250)
-        self.overtakelist.add(0.5, 1550, 1900)
+        #self.overtakelist.add(0.5, 1550, 1900)
+        pass
 
     @property
     def range_finder_angles(self):
@@ -161,7 +162,7 @@ class Driver:
 
     def optimizedDrive(self, carstate: State) -> Command:
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
-        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def startDrive(self, carstate: State) -> Command:
@@ -201,22 +202,16 @@ class Driver:
     def calc_steering(self, carstate: State, center_dist, k_p_center, k_i_center, k_d_center, oversteer_angle=0):
         steering_stellgr_angle = (-self.pid_angle.control(carstate.angle, 0) / 180)
 
-        steering_stellgr_angle = min(1, steering_stellgr_angle)
-        steering_stellgr_angle = max(-1, steering_stellgr_angle)
 
         self.pid_dist.set_params(k_p_center, k_i_center, k_d_center)
         steering_stellgr_dist = self.pid_dist.control(carstate.distance_from_center, center_dist)
 
-        steering_stellgr_dist = min(1, steering_stellgr_dist)
-        steering_stellgr_dist = max(-1, steering_stellgr_dist)
 
         if oversteer_angle > 0:
             steering = oversteer_angle
         else:
             steering = (3*steering_stellgr_angle + steering_stellgr_dist) / 3
 
-        steering = min(1, steering)
-        steering = max(-1, steering)
 
         return steering
 
@@ -232,13 +227,13 @@ class Driver:
                 K_acc = 0.8
 
             if K_brake == 0:
-                K_brake = 0.8
+                K_brake = 1
         else:
             if K_acc == 0:
                 K_acc = 0.5
 
             if K_brake == 0:
-                K_brake = 0.5
+                K_brake = 1
 
         #tar_speed = self.calc_target_speed(carstate)
         #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
