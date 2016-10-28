@@ -17,12 +17,9 @@ class StrategyController:
     def __init__(self):
         self.speed = 0
         self.target_pos = 0
-        self.m_p1 = 0
-        self.m_p2 = 0
-        self.m_p3 = 0
 
-    def control(self, carstate: State, custom_data: CustomData):
-        self.speed, self.target_pos = self.control_speed(carstate, custom_data)
+    def control(self, carstate: State):
+        self.speed, self.target_pos = self.control_speed(carstate)
 
         if carstate.distance_raced < 50:
             self.speed = 600
@@ -35,31 +32,15 @@ class StrategyController:
 
         return self.speed, self.target_pos
 
-    def control_speed(self, carstate: State, custom_data: CustomData):
+    def control_speed(self, carstate: State):
         cshape = self.detect_curve(carstate, 90)
-        custom_data.cshape = cshape
-        #opponent_pos = self.detect_opponent(carstate)
-        #if opponent_pos == Side.LEFT:
-        #    lane = 0.9
-        #elif opponent_pos == Side.RIGHT:
-        #    lane = -0.9
-        #else:
-        #    lane = 0.0 #self.detect_curve_lane(carstate)
+
         lane = self.detect_curve_lane(carstate)
-
-        m = carstate.distances_from_edge
-        m_now = m[9]
-
-        #_logger.info('dist: {}, CURVE: {} -- LANE: {}||| {} || {} || {}'.format(carstate.distance_from_start, cshape, lane, m[8], m[9], m[10]))
 
         if cshape == 0:
             return 400, lane
         else:
             return 600 - 550*abs(cshape), lane
-
-        self.m_p1 = m_now
-        self.m_p2 = m_p1
-        self.m_p3 = m_p2
 
     def detect_opponent(self, carstate: State):
         oppenent_pos = Side.NONE
@@ -76,12 +57,6 @@ class StrategyController:
                 cshape = 0.9
             else:
                 cshape = -1.06
-        """else:
-            cshape = self.detect_curve(carstate, 180)
-            if cshape > 0:
-                cshape = 0
-            else:
-                cshape = -0"""
         return cshape
 
     def detect_curve(self, carstate: State, det_dist):
@@ -89,13 +64,6 @@ class StrategyController:
         left = 8
         middle = 9
         right = 10
-
-        """if carstate.angle > 5:
-            offset = -1
-        elif carstate.angle < -5:
-            offset = 1
-        else:"""
-        #print(carstate.speed_x, carstate.speed_y)
 
         if carstate.speed_x > 51:
             shape_cut = 125

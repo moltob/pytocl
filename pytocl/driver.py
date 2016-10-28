@@ -1,6 +1,5 @@
 import logging
 
-from pytocl.analysis import DataLogWriter
 from pytocl.car import State, Command, MPS_PER_KMH, CustomData
 
 from pytocl.stability import StabilityController
@@ -18,8 +17,7 @@ class Driver:
     every 20ms and must return a command within 10ms wall time.
     """
 
-    def __init__(self, logdata=True):
-        self.data_logger = DataLogWriter() if logdata else None
+    def __init__(self):
         self.stability_controller = StabilityController()
         self.strategy_controller = StrategyController()
         self.emergency_controller = EmergencyController()
@@ -41,9 +39,7 @@ class Driver:
         Optionally implement this event handler to clean up or write data before the application is
         stopped.
         """
-        if self.data_logger:
-            self.data_logger.close()
-            self.data_logger = None
+        pass
 
     def drive(self, carstate: State) -> Command:
         """Produces driving command in response to newly received car state.
@@ -52,13 +48,9 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
-        custom_data = CustomData()
-        (strategy_speed, strategy_target_pos) = self.strategy_controller.control(carstate, custom_data)
+        (strategy_speed, strategy_target_pos) = self.strategy_controller.control(carstate)
         next_command = self.stability_controller.control(strategy_speed, strategy_target_pos, carstate)
 
-        self.emergency_controller.control(carstate, next_command, custom_data)
-
-        if self.data_logger:
-            self.data_logger.log(carstate, next_command, custom_data)
+        self.emergency_controller.control(carstate, next_command)
 
         return next_command

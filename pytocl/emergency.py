@@ -12,8 +12,7 @@ class EmergencyController:
         self.emergency_time = 0
         self.steering_angle = 0
 
-
-    def control(self, carstate: State, command: Command, custom_data: CustomData):
+    def control(self, carstate: State, command: Command):
         if False == self.emergency_active:
             slow_speed = False
             off_track = False
@@ -35,7 +34,7 @@ class EmergencyController:
                 self.stuck_time = 0
                 self.steering_angle = command.steering
 
-        if True == self.emergency_active:
+        if self.emergency_active:
             self.emergency_time += 1
             command.gear = -1
             command.accelerator = 0.2
