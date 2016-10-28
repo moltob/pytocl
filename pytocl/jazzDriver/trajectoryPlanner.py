@@ -155,7 +155,6 @@ class TrajectoryPlanner:
             angle = math.atan(targetY / targetX) * 180 / math.pi
         else:
             angle = 0
-
         return angle, distance
 
     def update(self, carstate: State) -> Coordinate:
@@ -177,9 +176,9 @@ class TrajectoryPlanner:
         #print(leftTrackBorderX, leftTrackBorderY, rightTrackBorderX, rightTrackBorderY)
         #print(targetX, targetY)
         #print(distance, angle)
-        if leftCurve or rightCurve:
-            print('########################')
-            print(leftCurve, rightCurve, targetX)
-            print('########################')
+        #if leftCurve or rightCurve:
+        #    print('########################')
+        #    print(leftCurve, rightCurve, targetX)
+        #    print('########################')
 
         return Coordinate(distance, averageAngle)
