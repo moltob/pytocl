@@ -101,12 +101,20 @@ class Dynamic:
             #_logger.info('switching down')
             self.gear = carstate.gear -1
 
-    def accelerate (self, speed, carstate : State):
-
-        if (speed > carstate.speed_x):
-            if abs(carstate.speed_y) >= 0:
-                self.accelerator += 1
+    def accelerate(self, speed, carstate : State):
+        if carstate.distance_from_start < 100 or carstate.distance_from_start > 3580:
+            self.accelerator = 1
+            print("Dist: " + str(carstate.distance_from_start))
+        elif (speed > carstate.speed_x):
+            if abs(carstate.speed_y) > carstate.speed_x+5:
+                self.accelerator = 0
             else:
-                self.accelerator -= 0.5
+                if self.accelerator < 0.5:
+                    self.accelerator = 0.5
+                else:
+                    self.accelerator = 1
         else:
-            self.accelerator -= 0.7
+            self.accelerator = 0
+
+        print( "acc: " + str(self.accelerator))
+
