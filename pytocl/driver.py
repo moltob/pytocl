@@ -181,13 +181,44 @@ class Driver:
                     print ("LEFT")
 
 
+    def overtake_opponent (self, carstate: State, command: Command):
+
+        opponent_detection_front = 0
+        opponent_detection_left = 0
+        opponent_detection_right = 0
+
+        #is opponent in front of us
+        for i in [17, 18, 19]:
+            if ((carstate.opponents[i] < 30) and ((opponent_detection_front > carstate.opponents[i])) or (opponent_detection_front == 0)):
+                opponent_detection_front = carstate.opponents[i]
+
+        for i in [14, 15, 16]:
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i])) or (opponent_detection_right == 0)):
+                opponent_detection_right = carstate.opponents[i]
+
+        for i in [20, 21, 22]:
+            if ((carstate.opponents[i] < 20) and ((opponent_detection_right > carstate.opponents[i])) or (opponent_detection_right == 0)):
+                opponent_detection_right = carstate.opponents[i]
+
+
+        if (opponent_detection_front > 0 and (opponent_detection_left > 20 or opponent_detection_right > 20)):
+
+            if (opponent_detection_left > opponent_detection_right):
+                command.steering += 0.3
+                command.steering = min(1, command.steering)
+                print("LEFT")
+            else:
+                command.steering -= 0.3
+                command.steering = max(-1, command.steering)
+                print("RIGHT")
+
     def select_steering(self, carstate: State, command: Command):
 
         self.checkOutsideTrack(carstate, command)
         self.control_steering_angle(carstate, command)
         self.control_target_velocity(carstate)
         self.control_opponents_backwards (carstate, command)
-
+        self.overtake_opponent(carstate, command)
 
     def checkOutsideTrack(self, carstate: State, command: Command):
         self.outside_track = False
