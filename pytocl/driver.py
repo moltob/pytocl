@@ -57,9 +57,9 @@ class Driver:
         self.startUpAccelarations.add(10, 0.4)
         self.startUpAccelarations.add(20, 0.5)
         self.startUpAccelarations.add(40, 0.7)
-        self.startUpAccelarations.add(50, 0.8)
-        self.startUpAccelarations.add(50, 0.8)
-        self.startUpAccelarations.add(70, 1.0)
+        self.startUpAccelarations.add(50, 0.75)
+        self.startUpAccelarations.add(70, 0.8)
+        self.startUpAccelarations.add(80, 1.0)
         #self.startUpAccelarations.add(60, 0.8)
         #self.startUpAccelarations.add(70, 1.0)
 
@@ -84,47 +84,47 @@ class Driver:
         self.speedlist.add(970, 150)
         self.speedlist.add(980, 130)
         self.speedlist.add(990, 120)
-        self.speedlist.add(1020, 150)
-        self.speedlist.add(1050, 180)
-        self.speedlist.add(1200, 160)
-        self.speedlist.add(1250, 200)
+        self.speedlist.add(1020, 170)
+        self.speedlist.add(1050, 200)
+        self.speedlist.add(1200, 200)
+        self.speedlist.add(1250, 230)
         self.speedlist.add(1430, 150)
         self.speedlist.add(1450, 130)
         self.speedlist.add(1470, 120)
         self.speedlist.add(1550, 150)
         self.speedlist.add(1600, 180)
-        self.speedlist.add(1650, 220)
+        self.speedlist.add(1650, 230)
         self.speedlist.add(1850, 160)
         self.speedlist.add(1880, 140)
         self.speedlist.add(1890, 120)
         self.speedlist.add(1900, 110)
         self.speedlist.add(1905, 95)
-        self.speedlist.add(1940, 95)
-        self.speedlist.add(1950, 150)
-        self.speedlist.add(2020, 130)
-        self.speedlist.add(2030, 190)
+        self.speedlist.add(1940, 120)
+        self.speedlist.add(1950, 180)
+        self.speedlist.add(2020, 190)
+        self.speedlist.add(2030, 200)
         self.speedlist.add(2300, 160)
         self.speedlist.add(2320, 140)
         self.speedlist.add(2400, 80)
         self.speedlist.add(2430, 65)
-        self.speedlist.add(2460, 55)
+        self.speedlist.add(2460, 60)
         self.speedlist.add(2490, 90)
         self.speedlist.add(2500, 130)
         self.speedlist.add(2590, 170)
         self.speedlist.add(2650, 135)
-        self.speedlist.add(2750, 210)
+        self.speedlist.add(2750, 230)
         self.speedlist.add(2800, 180)
         self.speedlist.add(2850, 150)
         self.speedlist.add(2880, 130)
-        self.speedlist.add(2900, 120)
+        self.speedlist.add(2900, 130)
         self.speedlist.add(3010, 210)
         self.speedlist.add(3180, 150)
         self.speedlist.add(3200, 110)
-        self.speedlist.add(3210, 80)
-        self.speedlist.add(3250, 65)
-        self.speedlist.add(3290,150)
-        self.speedlist.add(3320,200)
-        self.speedlist.add(3580,160)
+        self.speedlist.add(3210, 85)
+        self.speedlist.add(3250, 70)
+        self.speedlist.add(3290,200)
+        self.speedlist.add(3320,230)
+        self.speedlist.add(3580,200)
 
 
     def createOvertakeList(self):
@@ -274,7 +274,8 @@ class Driver:
         if carstate.distance_raced > 80 and self.driveMode == 0:
             self.driveMode = 1
 
-        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        #tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        tar_speed = self.calc_target_speed(self, carstate)
         acceleration = self.startUpAccelarations.getSpeedForDistance(carstate.distance_from_start)
         _logger.info('acceleration: {}'.format(acceleration))
         return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=acceleration, T_acc=20, K_brake=0, T_brake=20, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
@@ -320,7 +321,10 @@ class Driver:
 
     def calc_accel_and_brake(self, carstate, steering, tar_speed, K_acc, T_acc, K_brake, T_brake):
         if abs(steering) < 0.1:
-            K_acc = 1
+            if carstate.distance_raced > 80:
+                K_acc = 1.0
+            else:
+                K_acc = 0.75
             K_brake = 1
         elif abs(steering) < 0.3:
             if K_acc == 0:
@@ -388,8 +392,8 @@ class Driver:
         if carstate.distances_from_edge[9] < 50:
             return 120
         if carstate.distances_from_edge[9] < 100:
-            return 180
+            return 130
         if carstate.distances_from_edge[9] < 150:
-            return 220
+            return 200
         else:
-            return 260
+            return 200
