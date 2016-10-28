@@ -127,10 +127,10 @@ class Driver:
         c7 = Curve(2600, 2610, 2800, 170, -0.8)
         self.curves.append(c7)
 
-        c8 = Curve(2880, 2910, 3030, 150, 0.8)
+        c8 = Curve(2890, 2920, 3030, 160, 0.8)
         self.curves.append(c8)
 
-        c9 = Curve(3180, 3235, 3285, 90, -0.8)
+        c9 = Curve(3180, 3235, 3285, 95, -0.8)
         self.curves.append(c9)
 
 
