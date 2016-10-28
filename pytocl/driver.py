@@ -6,6 +6,7 @@ from pytocl.pid import PID
 from pytocl.speedlist import SpeedList
 from pytocl.overtakelist import OvertakeList
 from pytocl.filter import *
+from math import sqrt
 
 _logger = logging.getLogger(__name__)
 
@@ -139,11 +140,17 @@ class Driver:
         it will get the car (if not disturbed by other drivers) successfully driven along the race
         track.
         """
+        if carstate.distance_from_center > 1.3 or carstate.distance_from_center <-1.3:
+            self.driveMode = 2
+        elif self.driveMode == 2:
+            self.driveMode = 1
 
         if self.driveMode == 0:
             command = self.startDrive(carstate)
         elif  self.driveMode == 1:
             command = self.optimizedDrive(carstate)
+        elif  self.driveMode == 2:
+            command = self.recoverDrive(carstate)
         else:
             command = self.overtakeDrive(carstate)
         _logger.info('driveMode: {}'.format(self.driveMode))
@@ -163,6 +170,11 @@ class Driver:
     def optimizedDrive(self, carstate: State) -> Command:
         tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
         return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=tar_speed, K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
+        pass
+
+    def recoverDrive(self, carstate: State) -> Command:
+        tar_speed = self.speedlist.getSpeedForDistance(carstate.distance_from_start % 3608)
+        return self.controlCar(carstate, over_steer=False, oversteer_angle=0, tar_speed=max(30,sqrt(carstate.speed_x**2+carstate.speed_y**2)-1)    , K_acc=0, T_acc=5, K_brake=0, T_brake=25, center_dist=0, k_p_center=0.5, k_i_center=0.02, k_d_center=0)
         pass
 
     def startDrive(self, carstate: State) -> Command:
